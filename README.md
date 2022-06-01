@@ -26,7 +26,7 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 ## 图形界面
 
-<img src="C:\Users\15716\lib\常用信息\GUI.png" alt="GUI" style="zoom: 80%;" />
+<img src="pictures/GUI.png" alt="GUI" style="zoom: 80%;" />
 
 ​										图形界面示意图
 
