@@ -55,10 +55,10 @@ class WeChat():
 
 
 if __name__ == '__main__':
-    wechat_path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    wechat_path = ""
     wechat = WeChat(wechat_path)
 
-    to_who = "四片打流小分队"
+    to_who = ""
     text = "你好"
 
     for contact in [to_who]:
