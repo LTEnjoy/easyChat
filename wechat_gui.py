@@ -8,18 +8,6 @@ from PyQt5.QtGui import *
 from ui_auto_wechat import WeChat
 
 
-def test():
-    data = QMimeData()
-    # 判断为文本内容
-    path = r"C:\Users\15716\lib\常用信息\人工智能开发平台（AIStation）普通用户使用手册.docx"
-    url = QUrl.fromLocalFile(path)
-    print(url)
-    # data.setUrls([url])
-    data.setText("你好")
-    print(data)
-    QApplication.clipboard().setMimeData(data)
-
-
 # 定时发送子线程类
 class ClockThread(QThread):
     def __init__(self):
