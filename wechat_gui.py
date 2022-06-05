@@ -199,22 +199,23 @@ class WechatGUI(QWidget):
     def init_send_msg(self):
         # 发送按钮相应事件
         def send_msg():
-            data = QMimeData()
             # 判断为文本内容
             if self.msg.isEnabled():
                 if self.msg.text().strip() == "":
                     QMessageBox.about(self, "错误", "不能发送空白内容")
                     return
-                data.setText(self.msg.text())
+                is_text = True
+
             # 否则为文件内容
             else:
-                url = QUrl.fromLocalFile(self.msg.text())
-                data.setUrls([url])
-            QApplication.clipboard().setMimeData(data)
+                is_text = False
 
             for i in range(self.contacts_view.count()):
                 name = self.contacts_view.item(i).text()
-                self.wechat.send_file(name)
+                if is_text:
+                    self.wechat.send_msg(name, self.msg.text())
+                else:
+                    self.wechat.send_file(name, self.msg.text())
 
         # 按钮响应：选择发送内容
         def switch_mode():
