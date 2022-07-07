@@ -99,7 +99,8 @@ class WechatGUI(QWidget):
         def add_contact():
             name, ok = QInputDialog.getText(self, '添加用户', '输入添加的用户名:')
             if ok:
-                self.contacts_view.addItem(str(name))
+                if name != "":
+                    self.contacts_view.addItem(str(name))
 
         # 删除用户信息
         def del_contact():
@@ -140,7 +141,8 @@ class WechatGUI(QWidget):
         def add_contact():
             name, ok = QInputDialog.getText(self, '添加时间', "输入时间:'小时(0~23) 分钟(0~59)'，例'12 35'为十二点三十五")
             if ok:
-                self.time_view.addItem(str(name))
+                if name != "":
+                    self.time_view.addItem(str(name))
 
         # 按钮响应：删除时间
         def del_contact():
@@ -197,56 +199,47 @@ class WechatGUI(QWidget):
 
     # 发送消息内容界面的初始化
     def init_send_msg(self):
+        # 增加一条文本信息
+        def add_text():
+            name, ok = QInputDialog.getText(self, '添加文本内容', '输入添加的内容:')
+            if ok:
+                if name != "":
+                    self.msg.addItem(f"text{str(name)}")
+
+        # 增加一个文件
+        def add_file():
+            path = QFileDialog.getOpenFileName(self, '打开文件', '/home')[0]
+            if path != "":
+                self.msg.addItem(f"file{str(path)}")
+
+        # 删除一条发送的信息
+        def del_content():
+            for i in range(self.msg.count() - 1, -1, -1):
+                if self.msg.item(i).isSelected():
+                    self.msg.takeItem(i)
+
         # 发送按钮相应事件
         def send_msg():
-            # 判断为文本内容
-            if self.msg.isEnabled():
-                if self.msg.text().strip() == "":
-                    QMessageBox.about(self, "错误", "不能发送空白内容")
-                    return
-                is_text = True
+            for user_i in range(self.contacts_view.count()):
+                name = self.contacts_view.item(user_i).text()
+                for msg_i in range(self.msg.count()):
+                    msg = self.msg.item(msg_i).text()
+                    # 判断为文本内容
+                    if msg[:4] == "text":
+                        self.wechat.send_msg(name, msg[4:])
 
-            # 否则为文件内容
-            else:
-                is_text = False
-
-            for i in range(self.contacts_view.count()):
-                name = self.contacts_view.item(i).text()
-                if is_text:
-                    self.wechat.send_msg(name, self.msg.text())
-                else:
-                    self.wechat.send_file(name, self.msg.text())
-
-        # 按钮响应：选择发送内容
-        def switch_mode():
-            source = self.sender()
-            for btn in btn_list:
-                if btn.text() == source.text():
-                    btn.setChecked(True)
-                else:
-                    btn.setChecked(False)
-
-            if source.text() == "发送文本内容":
-                info.setText("输入要发送的内容")
-                self.msg.setEnabled(True)
-                self.msg.setText("")
-
-            else:
-                info.setText("选择要发送的文件")
-                path = QFileDialog.getOpenFileName(self, '打开文件', '/home')[0]
-                self.msg.setEnabled(False)
-
-                if path != "":
-                    self.msg.setText(path)
+                    # 否则为文件内容
+                    elif msg[:4] == "file":
+                        self.wechat.send_file(name, msg[4:])
 
         # 左边的布局
         vbox_left = QVBoxLayout()
 
         # 提示信息
-        info = QLabel("输入要发送的内容")
+        info = QLabel("添加要发送的内容（程序将按顺序发送）")
 
         # 输入内容框
-        self.msg = QLineEdit()
+        self.msg = MyListWidget()
         self.clock.msg = self.msg
 
         # 发送按钮
@@ -262,18 +255,18 @@ class WechatGUI(QWidget):
         vbox_right = QVBoxLayout()
         vbox_right.stretch(1)
 
-        text_btn = QPushButton("发送文本内容")
-        text_btn.setCheckable(True)
-        text_btn.clicked[bool].connect(switch_mode)
-        text_btn.toggle()
-        file_btn = QPushButton("发送文件")
-        file_btn.setCheckable(True)
-        file_btn.clicked[bool].connect(switch_mode)
+        text_btn = QPushButton("添加文本内容")
+        text_btn.clicked.connect(add_text)
 
-        btn_list = [text_btn, file_btn]
+        file_btn = QPushButton("添加文件")
+        file_btn.clicked.connect(add_file)
+
+        del_btn = QPushButton("删除内容")
+        del_btn.clicked.connect(del_content)
 
         vbox_right.addWidget(text_btn)
         vbox_right.addWidget(file_btn)
+        vbox_right.addWidget(del_btn)
 
         # 整体布局
         hbox = QHBoxLayout()
@@ -321,7 +314,7 @@ class WechatGUI(QWidget):
 
         self.setLayout(vbox)
         self.setFixedSize(500, 700)
-        self.setWindowTitle('微信助手')
+        self.setWindowTitle('EasyChat微信助手')
         self.show()
 
     # 选择微信exe路径
