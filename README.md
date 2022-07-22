@@ -34,7 +34,7 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 <img src="pictures/GUI.png" alt="GUI" style="zoom: 80%;" />
 
-										**图形界面示意图**
+			**图形界面示意图**
 
 ### 使用步骤
 
