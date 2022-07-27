@@ -1,10 +1,11 @@
 # easyChat
 
-PC端微信助手（非web微信版）：定时发送信息；群发信息；自动回复等
+PC端微信助手（非web微信版）：定时发送信息；群发信息；自动回复等。
 
 最新编辑日期：2022/07/07
 
-有疑问请邮件交流：[sujinltenjoy@gmail.com](mailto:sujinltenjoy@gmail.com)
+有疑问推荐在Issues上提出以供他人参考。
+个人邮箱：[sujinltenjoy@gmail.com](mailto:sujinltenjoy@gmail.com)。
 
 ## 更新日志
 
@@ -34,7 +35,7 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 <img src="pictures/GUI.png" alt="GUI" style="zoom: 80%;" />
 
-										**图形界面示意图**
+			**图形界面示意图**
 
 ### 使用步骤
 
