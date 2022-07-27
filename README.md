@@ -8,6 +8,8 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 个人邮箱：[sujinltenjoy@gmail.com](mailto:sujinltenjoy@gmail.com)。
 
+如果有帮到您的话，麻烦顺手点个star~
+
 ## 更新日志
 
 2022/07/07	完成发送内容的优化，现在支持一次定时按顺序发送多条信息。
