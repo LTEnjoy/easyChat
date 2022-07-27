@@ -204,13 +204,17 @@ class WechatGUI(QWidget):
             name, ok = QInputDialog.getText(self, '添加文本内容', '输入添加的内容:')
             if ok:
                 if name != "":
-                    self.msg.addItem(f"text{str(name)}")
+                    # 判断给文本是否是@信息
+                    if name[:3] == "at:":
+                        self.msg.addItem(str(name))
+                    else:
+                        self.msg.addItem(f"text:{str(name)}")
 
         # 增加一个文件
         def add_file():
             path = QFileDialog.getOpenFileName(self, '打开文件', '/home')[0]
             if path != "":
-                self.msg.addItem(f"file{str(path)}")
+                self.msg.addItem(f"file:{str(path)}")
 
         # 删除一条发送的信息
         def del_content():
@@ -224,13 +228,20 @@ class WechatGUI(QWidget):
                 name = self.contacts_view.item(user_i).text()
                 for msg_i in range(self.msg.count()):
                     msg = self.msg.item(msg_i).text()
-                    # 判断为文本内容
-                    if msg[:4] == "text":
-                        self.wechat.send_msg(name, msg[4:])
 
-                    # 否则为文件内容
-                    elif msg[:4] == "file":
-                        self.wechat.send_file(name, msg[4:])
+                    type, content = msg.split(':', 1)
+
+                    # 判断为文本内容
+                    if type == "text":
+                        self.wechat.send_msg(name, content)
+
+                    # 判断为文件内容
+                    elif type == "file":
+                        self.wechat.send_file(name, content)
+
+                    # 判断为@他人
+                    elif type == "at":
+                        self.wechat.at(name, content)
 
         # 左边的布局
         vbox_left = QVBoxLayout()
