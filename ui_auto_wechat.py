@@ -34,6 +34,12 @@ class WeChat():
         # 用于复制内容到剪切板
         self.app = QApplication([])
 
+        # 自动回复的联系人列表
+        self.auto_reply_contacts = []
+
+        # 自动回复的内容
+        self.auto_reply_msg = "[自动回复]您好，我现在正在忙，稍后会主动联系您，感谢理解。"
+
     # 打开微信客户端
     def open_wechat(self):
         subprocess.Popen(self.path)
@@ -58,6 +64,18 @@ class WeChat():
         search_box.SendKeys("{enter}")
 
         return search_box
+
+    # 在指定群聊中@他人（若@所有人需具备@所有人权限）
+    def at(self, name, at_name):
+        window = self.get_contact(name)
+
+        # 如果at_name为空则代表@所有人
+        if at_name == "":
+            window.SendKeys("@{UP}{enter}{enter}")
+
+        else:
+            window.SendKeys(f"@{at_name}")
+            window.SendKeys("{enter}{enter}")
 
     # 搜索指定用户名的联系人发送信息
     def send_msg(self, name, text):
@@ -118,14 +136,46 @@ class WeChat():
         # 返回去重过后的联系人列表
         return list(set(contacts))
 
-    # # 检测微信是否收到新消息
-    # def check_new_msg(self):
-    #     self.open_wechat()
-    #     wechat = self.get_wechat()
-    #     item = wechat.ListItemControl(Name="")
-    #     x, y = item.GetPosition()
-    #     auto.MoveTo(x, y)
-    #     print(item.TextControl(Depth=2))
+    # 检测微信是否收到新消息
+    def check_new_msg(self):
+        self.open_wechat()
+        wechat = self.get_wechat()
+
+        # 获取左侧聊天按钮
+        chat_btn = wechat.ButtonControl(Name="聊天")
+        item = wechat.ListItemControl()
+        double_click(chat_btn)
+        # 持续点击聊天按钮，直到获取完全部新消息
+        first_name = item.Name
+        while True:
+            print(item.Name)
+            # 判断该联系人是否需要自动回复
+            if item.Name in self.auto_reply_contacts:
+                self.auto_reply(item, self.auto_reply_msg)
+                # print("需要自动回复")
+
+            # 跳转到下一个新消息
+            double_click(chat_btn)
+            item = wechat.ListItemControl()
+            # 已经完成遍历，退出循环
+            if first_name == item.Name:
+                break
+
+        # x, y = item.GetPosition()
+        # auto.SetCursorPos(x, y)
+        # print(item.TextControl(Depth=2))
+
+    # 设置自动回复的联系人
+    def set_auto_reply(self, contacts):
+        # contacts是一个列表
+        self.auto_reply_contacts = contacts
+
+    # 自动回复
+    def auto_reply(self, element, text):
+        click(element)
+        pyperclip.copy(text)
+        ctrlV()
+        element.SendKeys("{enter}")
 
 
 if __name__ == '__main__':
