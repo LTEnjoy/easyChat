@@ -13,14 +13,6 @@ from PyQt5.QtCore import QMimeData, QUrl
 from typing import List
 
 
-# 调用win32api的模拟点击功能实现ctrl+v粘贴快捷键
-def ctrlV():
-    win32api.keybd_event(17,0,0,0)  #ctrl键位码是17
-    win32api.keybd_event(86,0,0,0)  #v键位码是86
-    win32api.keybd_event(86,0,win32con.KEYEVENTF_KEYUP,0) #释放按键
-    win32api.keybd_event(17,0,win32con.KEYEVENTF_KEYUP,0)
-
-
 # 鼠标移动到控件上
 def move(element):
     x, y = element.GetPosition()
@@ -72,13 +64,13 @@ class WeChat:
     # 搜索指定用户
     def get_contact(self, name):
         self.open_wechat()
-        wechat = self.get_wechat()
+        self.get_wechat()
 
         search_box = auto.EditControl(Depth=8, Name="搜索")
         click(search_box)
 
         pyperclip.copy(name)
-        ctrlV()
+        auto.SendKeys("{Ctrl}v")
         # 等待客户端搜索联系人
         time.sleep(0.1)
         search_box.SendKeys("{enter}")
@@ -99,11 +91,17 @@ class WeChat:
     def send_msg(self, name, text):
         self.get_contact(name)
         pyperclip.copy(text)
-        ctrlV()
+        auto.SendKeys("{Ctrl}v")
         auto.SendKeys("{enter}")
 
     # 搜索指定用户名的联系人发送文件
-    def send_file(self, name, path):
+    def send_file(self, name: str, path: str):
+        """
+        Args:
+            name: 指定用户名的名称，输入搜索框后出现的第一个人
+            path: 发送文件的本地地址
+        """
+        
         # 粘贴文件发送给用户
         self.get_contact(name)
         # 将文件复制到剪切板
@@ -113,8 +111,7 @@ class WeChat:
         self.app.clipboard().setMimeData(file)
 
         # 暂停等待文件复制到剪切板
-        time.sleep(0.5)
-        ctrlV()
+        auto.SendKeys("{Ctrl}v")
         auto.SendKeys("{enter}")
 
     # 获取所有通讯录中所有联系人
@@ -187,8 +184,8 @@ class WeChat:
     def auto_reply(self, element, text):
         click(element)
         pyperclip.copy(text)
-        ctrlV()
-        element.SendKeys("{enter}")
+        auto.SendKeys("{Ctrl}v")
+        auto.SendKeys("{enter}")
     
     # 识别聊天内容的类型
     # 0：用户发送    1：时间信息  2：红包信息  3：”查看更多消息“标志
@@ -270,11 +267,12 @@ if __name__ == '__main__':
     wechat_path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(wechat_path)
 
-    name = ""
-    text = ""
+    name = "文件传输助手"
+    text = "你好"
+    file = "C:/Users/Dell/Pictures/takagi.jpeg"
     
-    dialogs = wechat.get_dialogs(name, 30)
-    # wechat.send_msg(to_who, text)
+    wechat.send_msg(name, text)
+    wechat.send_file(name, file)
 
     # contacts = wechat.find_all_contacts()
     # print(contacts)
