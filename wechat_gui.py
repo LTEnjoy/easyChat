@@ -6,14 +6,18 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from ui_auto_wechat import WeChat
+from functools import partial
 
 
 # 定时发送子线程类
 class ClockThread(QThread):
     def __init__(self):
         super().__init__()
+        # 是否正在定时
         self.time_counting = False
-        self.send_btn = None
+        # 发送信息的函数
+        self.send_func = None
+        # 定时列表
         self.clocks = None
 
     def __del__(self):
@@ -26,11 +30,11 @@ class ClockThread(QThread):
             min = localtime.tm_min % 60
 
             for i in range(self.clocks.count()):
-                clock_hour, clock_min = self.clocks.item(i).text().split(" ")
-
+                clock_hour, clock_min, st_ed = self.clocks.item(i).text().split(" ")
+                st, ed = st_ed.split('-')
                 if int(clock_hour) == hour and int(clock_min) == min:
-                    self.send_btn.click()
-
+                    self.send_func(st=int(st), ed=int(ed))
+                    # self.send_func()
             time.sleep(60)
 
 
@@ -139,7 +143,8 @@ class WechatGUI(QWidget):
     def init_clock(self):
         # 按钮响应：增加时间
         def add_contact():
-            name, ok = QInputDialog.getText(self, '添加时间', "输入时间:'小时(0~23) 分钟(0~59)'，例'12 35'为十二点三十五")
+            name, ok = QInputDialog.getText(self, '添加时间', "输入格式:'小时(0~23) 分钟(0~59) 发送信息的范围 (xx-xx) '，\n"
+                                                          "例'12 35 1-10'为12:35发送内容栏的第1条至第10条")
             if ok:
                 if name != "":
                     self.time_view.addItem(str(name))
@@ -202,13 +207,14 @@ class WechatGUI(QWidget):
         # 增加一条文本信息
         def add_text():
             name, ok = QInputDialog.getText(self, '添加文本内容', '输入添加的内容:')
+            rank_str = f"{self.msg.count() + 1}:"
             if ok:
                 if name != "":
                     # 判断给文本是否是@信息
                     if name[:3] == "at:":
-                        self.msg.addItem(str(name))
+                        self.msg.addItem(rank_str+str(name))
                     else:
-                        self.msg.addItem(f"text:{str(name)}")
+                        self.msg.addItem(rank_str+f"text:{str(name)}")
 
         # 增加一个文件
         def add_file():
@@ -222,14 +228,20 @@ class WechatGUI(QWidget):
                 if self.msg.item(i).isSelected():
                     self.msg.takeItem(i)
 
-        # 发送按钮相应事件
-        def send_msg():
+        # 发送按钮响应事件
+        def send_msg(gap=None, st=None, ed=None):
+            # 如果未定义范围的开头和结尾，则默认发送全部信息
+            if st is None:
+                st = 1
+                ed = self.msg.count()
+
             for user_i in range(self.contacts_view.count()):
                 name = self.contacts_view.item(user_i).text()
-                for msg_i in range(self.msg.count()):
+
+                for msg_i in range(st-1, ed):
                     msg = self.msg.item(msg_i).text()
 
-                    type, content = msg.split(':', 1)
+                    _, type, content = msg.split(':', 2)
 
                     # 判断为文本内容
                     if type == "text":
@@ -251,12 +263,11 @@ class WechatGUI(QWidget):
 
         # 输入内容框
         self.msg = MyListWidget()
-        self.clock.msg = self.msg
+        self.clock.send_func = send_msg
 
         # 发送按钮
         send_btn = QPushButton("发送")
         send_btn.clicked.connect(send_msg)
-        self.clock.send_btn = send_btn
 
         vbox_left.addWidget(info)
         vbox_left.addWidget(self.msg)
