@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-#软件的UI文件
+#软件的UI文件，定时发送尚未完善
 import os
 import sys
 import time
