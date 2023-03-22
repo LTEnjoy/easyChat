@@ -30,11 +30,11 @@ def double_click(element):
 	element.DoubleClick()
 
 
-# 微信的控件介绍
-# 以群名“测试”为例
+# 微信的控件介绍。注意"depth"是直接调用auto进行控件搜索的深度（见函数内部代码示例）
+# 以群名“测试”为例：
 # 左侧聊天列表“测试”群               Name: '测试'     ControlType: ListItemControl    depth: 10
 # 左侧聊天列表“测试”群               Name: '测试'     ControlType: ButtonControl      depth: 12
-# 进入“测试”群界面后上方的群名        Name: '测试'     ControlType: ButtonControl      depth: 14
+# 进入“测试”群界面之后上方的群名        Name: '测试'     ControlType: ButtonControl      depth: 14
 # “测试”群界面的内容框               Name: '消息'     ControlType: ListControl        depth: 12
 
 
@@ -74,24 +74,31 @@ class WeChat:
 		time.sleep(0.1)
 		search_box.SendKeys("{enter}")
 	
+	# 鼠标移动到发送按钮处点击发送消息
+	def press_enter(self):
+		# 获取发送按钮
+		send_button = auto.ButtonControl(Depth=15, Name="sendBtn")
+		click(send_button)
+	
 	# 在指定群聊中@他人（若@所有人需具备@所有人权限）
 	def at(self, name, at_name):
 		self.get_contact(name)
 		
 		# 如果at_name为空则代表@所有人
 		if at_name == "":
-			auto.SendKeys("@{UP}{enter}{enter}")
+			auto.SendKeys("@{UP}{enter}")
+			self.press_enter()
 		
 		else:
 			auto.SendKeys(f"@{at_name}")
-			auto.SendKeys("{enter}{enter}")
+			self.press_enter()
 	
 	# 搜索指定用户名的联系人发送信息
 	def send_msg(self, name, text):
 		self.get_contact(name)
 		pyperclip.copy(text)
 		auto.SendKeys("{Ctrl}v")
-		auto.SendKeys("{enter}")
+		self.press_enter()
 	
 	# 搜索指定用户名的联系人发送文件
 	def send_file(self, name: str, path: str):
@@ -107,7 +114,7 @@ class WeChat:
 		setClipboardFiles([path])
 		
 		auto.SendKeys("{Ctrl}v")
-		auto.SendKeys("{enter}")
+		self.press_enter()
 	
 	# 获取所有通讯录中所有联系人
 	def find_all_contacts(self):
@@ -180,7 +187,7 @@ class WeChat:
 		click(element)
 		pyperclip.copy(text)
 		auto.SendKeys("{Ctrl}v")
-		auto.SendKeys("{enter}")
+		self.press_enter()
 	
 	# 识别聊天内容的类型
 	# 0：用户发送    1：时间信息  2：红包信息  3：”查看更多消息“标志
