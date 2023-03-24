@@ -2,12 +2,10 @@
 WeChatPath = C:/Program Files (x86)/Tencent/WeChat/Wechat.exe
 FriendPath = D:/temp
 MsgPath = D:/temp
-SendMode = 1
 
 [注释]
 WeChatPath = 微信路径
 FriendPath = 用户组路径（便于选取，可不填）
 MsgPath = 预设消息路径（便于选取，可不填）
-SendMode = 消息发送模式（微信设置为按回车发送填0，按ctrl+回车发送填1）
 
 
