@@ -77,7 +77,7 @@ class WeChat:
 	# 鼠标移动到发送按钮处点击发送消息
 	def press_enter(self):
 		# 获取发送按钮
-		send_button = auto.ButtonControl(Depth=15, Name="sendBtn")
+		send_button = auto.ButtonControl(Depth=15, Name="发送(S)")
 		click(send_button)
 	
 	# 在指定群聊中@他人（若@所有人需具备@所有人权限）
@@ -274,7 +274,7 @@ if __name__ == '__main__':
 	file = "C:/Users/Dell/Pictures/takagi.jpeg"
 	
 	wechat.send_msg(name, text)
-	wechat.send_file(name, file)
+	# wechat.send_file(name, file)
 	
 	# contacts = wechat.find_all_contacts()
 	# print(contacts)
