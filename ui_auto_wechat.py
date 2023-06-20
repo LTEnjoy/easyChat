@@ -136,18 +136,31 @@ class WeChat:
 		
 		# 读取用户
 		contacts = []
-		for percent in np.arange(0, 1.05, 0.05):
-			scroll_pattern.SetScrollPercent(-1, percent)
+		# 如果不存在滑轮则直接读取
+		if scroll_pattern is None:
 			for contact in contacts_window.ListControl().GetChildren():
 				# 获取用户的昵称以及备注
 				name = contact.TextControl().Name
 				note = contact.ButtonControl(foundIndex=2).Name
-				
+
 				# 有备注的用备注，没有备注的用昵称
 				if note == "":
 					contacts.append(name)
 				else:
 					contacts.append(note)
+		else:
+			for percent in np.arange(0, 1.05, 0.01):
+				scroll_pattern.SetScrollPercent(-1, percent)
+				for contact in contacts_window.ListControl().GetChildren():
+					# 获取用户的昵称以及备注
+					name = contact.TextControl().Name
+					note = contact.ButtonControl(foundIndex=2).Name
+
+					# 有备注的用备注，没有备注的用昵称
+					if note == "":
+						contacts.append(name)
+					else:
+						contacts.append(note)
 		
 		# 返回去重过后的联系人列表
 		return list(set(contacts))
@@ -266,15 +279,15 @@ class WeChat:
 
 
 if __name__ == '__main__':
-	wechat_path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+	wechat_path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
 	wechat = WeChat(wechat_path)
 	
 	name = "文件传输助手"
 	text = "你好"
 	file = "C:/Users/Dell/Pictures/takagi.jpeg"
 	
-	wechat.send_msg(name, text)
+	# wechat.send_msg(name, text)
 	# wechat.send_file(name, file)
 	
-	# contacts = wechat.find_all_contacts()
-	# print(contacts)
+	contacts = wechat.find_all_contacts()
+	print(contacts)
