@@ -149,7 +149,7 @@ class WeChat:
 				else:
 					contacts.append(note)
 		else:
-			for percent in np.arange(0, 1.002, 0.001):
+			for percent in np.arange(0, 1.05, 0.01):
 				scroll_pattern.SetScrollPercent(-1, percent)
 				for contact in contacts_window.ListControl().GetChildren():
 					# 获取用户的昵称以及备注
