@@ -99,6 +99,25 @@ class WechatGUI(QWidget):
 
     # 选择用户界面的初始化
     def init_choose_contacts(self):
+        # 读取联系人列表并保存
+        def save_contacts():
+            path = QFileDialog.getSaveFileName(self, "保存联系人列表", "contacts.txt", "文本文件(*.txt)")[0]
+            contacts = self.wechat.find_all_contacts()
+            with open(path, 'w', encoding='utf-8') as f:
+                for contact in contacts:
+                    f.write(contact + '\n')
+            
+            QMessageBox.information(self, "保存成功", "联系人列表保存成功！")
+        
+        # 读取联系人列表并加载
+        def load_contacts():
+            path = QFileDialog.getOpenFileName(self, "加载联系人列表", "", "文本文件(*.txt)")[0]
+            with open(path, 'r', encoding='utf-8') as f:
+                for line in f.readlines():
+                    self.contacts_view.addItem(line.strip())
+            
+            QMessageBox.information(self, "加载成功", "联系人列表加载成功！")
+        
         # 增加用户列表信息
         def add_contact():
             name_list, ok = QInputDialog.getText(self, '添加用户', '输入添加的用户名(可添加多个人名，用英文逗号,分隔):')
@@ -127,14 +146,25 @@ class WechatGUI(QWidget):
         # 右边的按钮界面
         vbox = QVBoxLayout()
         vbox.stretch(1)
-
+        
+        # 用户界面的按钮
         info = QLabel("待发送用户列表")
+        
+        save_btn = QPushButton("保存联系人列表")
+        save_btn.clicked.connect(save_contacts)
+        
+        load_btn = QPushButton("加载用户txt文件")
+        load_btn.clicked.connect(load_contacts)
+        
         add_btn = QPushButton("添加用户")
         add_btn.clicked.connect(add_contact)
+        
         del_btn = QPushButton("删除用户")
         del_btn.clicked.connect(del_contact)
 
         vbox.addWidget(info)
+        vbox.addWidget(save_btn)
+        vbox.addWidget(load_btn)
         vbox.addWidget(add_btn)
         vbox.addWidget(del_btn)
         hbox.addLayout(vbox)
