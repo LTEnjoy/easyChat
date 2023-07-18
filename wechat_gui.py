@@ -102,21 +102,23 @@ class WechatGUI(QWidget):
         # 读取联系人列表并保存
         def save_contacts():
             path = QFileDialog.getSaveFileName(self, "保存联系人列表", "contacts.txt", "文本文件(*.txt)")[0]
-            contacts = self.wechat.find_all_contacts()
-            with open(path, 'w', encoding='utf-8') as f:
-                for contact in contacts:
-                    f.write(contact + '\n')
-            
-            QMessageBox.information(self, "保存成功", "联系人列表保存成功！")
+            if not path == "":
+                contacts = self.wechat.find_all_contacts()
+                with open(path, 'w', encoding='utf-8') as f:
+                    for contact in contacts:
+                        f.write(contact + '\n')
+                
+                QMessageBox.information(self, "保存成功", "联系人列表保存成功！")
         
         # 读取联系人列表并加载
         def load_contacts():
             path = QFileDialog.getOpenFileName(self, "加载联系人列表", "", "文本文件(*.txt)")[0]
-            with open(path, 'r', encoding='utf-8') as f:
-                for line in f.readlines():
-                    self.contacts_view.addItem(line.strip())
-            
-            QMessageBox.information(self, "加载成功", "联系人列表加载成功！")
+            if not path == "":
+                with open(path, 'r', encoding='utf-8') as f:
+                    for line in f.readlines():
+                        self.contacts_view.addItem(line.strip())
+                
+                QMessageBox.information(self, "加载成功", "联系人列表加载成功！")
         
         # 增加用户列表信息
         def add_contact():
@@ -150,7 +152,7 @@ class WechatGUI(QWidget):
         # 用户界面的按钮
         info = QLabel("待发送用户列表")
         
-        save_btn = QPushButton("保存联系人列表")
+        save_btn = QPushButton("保存微信好友列表")
         save_btn.clicked.connect(save_contacts)
         
         load_btn = QPushButton("加载用户txt文件")
@@ -176,7 +178,7 @@ class WechatGUI(QWidget):
         # 按钮响应：增加时间
         def add_contact():
             name, ok = QInputDialog.getText(self, '添加时间', "输入格式:'小时(0~23) 分钟(0~59) 发送信息的范围 (xx-xx) '，\n"
-                                                          "例'12 35 1-10'为12:35发送内容栏的第1条至第10条")
+                                                          "例 12 35 1-10 为12:35发送内容栏的第1条至第10条")
             if ok:
                 if name != "":
                     self.time_view.addItem(str(name))
