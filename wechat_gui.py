@@ -116,7 +116,7 @@ class WechatGUI(QWidget):
             if not path == "":
                 with open(path, 'r', encoding='utf-8') as f:
                     for line in f.readlines():
-                        self.contacts_view.addItem(line.strip())
+                        self.contacts_view.addItem(f"{self.contacts_view.count()+1}:{line.strip()}")
                 
                 QMessageBox.information(self, "加载成功", "联系人列表加载成功！")
         
@@ -127,13 +127,19 @@ class WechatGUI(QWidget):
                 if name_list != "":
                     names = name_list.split(',')
                     for name in names:
-                        self.contacts_view.addItem(str(name).strip())
+                        id = f"{self.contacts_view.count() + 1}"
+                        self.contacts_view.addItem(f"{id}:{str(name).strip()}")
 
         # 删除用户信息
         def del_contact():
+            # 删除选中的用户
             for i in range(self.contacts_view.count()-1, -1, -1):
                 if self.contacts_view.item(i).isSelected():
                     self.contacts_view.takeItem(i)
+
+            # 为所有剩余的用户重新编号
+            for i in range(self.contacts_view.count()):
+                self.contacts_view.item(i).setText(f"{i+1}:{self.contacts_view.item(i).text().split(':')[1]}")
 
         hbox = QHBoxLayout()
 
@@ -238,12 +244,24 @@ class WechatGUI(QWidget):
 
     # 发送消息内容界面的初始化
     def init_send_msg(self):
+        # 从txt中加载消息内容
+        def load_text():
+            path = QFileDialog.getOpenFileName(self, "加载内容文本", "", "文本文件(*.txt)")[0]
+            if not path == "":
+                with open(path, 'r', encoding='utf-8') as f:
+                    for line in f.readlines():
+                        self.msg.addItem(f"{self.msg.count()+1}:text:{line.strip()}")
+
+                QMessageBox.information(self, "加载成功", "内容文本加载成功！")
+
         # 增加一条文本信息
         def add_text():
-            name, ok = QInputDialog.getText(self, '添加文本内容', '输入添加的内容:')
+            # 设置默认的文本前缀
+            default = f"all:"
+            name, ok = QInputDialog.getText(self, '添加文本内容', '输入添加的内容:', text=default)
             rank_str = f"{self.msg.count() + 1}:"
             if ok:
-                if name != "":
+                if name != "all:":
                     # 判断给文本是否是@信息
                     if name[:3] == "at:":
                         self.msg.addItem(rank_str+str(name))
@@ -259,9 +277,14 @@ class WechatGUI(QWidget):
 
         # 删除一条发送的信息
         def del_content():
+            # 删除选中的信息
             for i in range(self.msg.count() - 1, -1, -1):
                 if self.msg.item(i).isSelected():
                     self.msg.takeItem(i)
+
+            # 为所有剩余的信息重新设置编号
+            for i in range(self.msg.count()):
+                self.msg.item(i).setText(f"{i+1}:"+self.msg.item(i).text().split(':', 1)[1])
 
         # 发送按钮响应事件
         def send_msg(gap=None, st=None, ed=None):
@@ -312,6 +335,9 @@ class WechatGUI(QWidget):
         vbox_right = QVBoxLayout()
         vbox_right.stretch(1)
 
+        load_btn = QPushButton("加载内容txt文件")
+        load_btn.clicked.connect(load_text)
+
         text_btn = QPushButton("添加文本内容")
         text_btn.clicked.connect(add_text)
 
@@ -321,6 +347,7 @@ class WechatGUI(QWidget):
         del_btn = QPushButton("删除内容")
         del_btn.clicked.connect(del_content)
 
+        vbox_right.addWidget(load_btn)
         vbox_right.addWidget(text_btn)
         vbox_right.addWidget(file_btn)
         vbox_right.addWidget(del_btn)
