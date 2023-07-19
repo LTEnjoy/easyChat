@@ -6,82 +6,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from ui_auto_wechat import WeChat
-from functools import partial
-
-
-# 定时发送子线程类
-class ClockThread(QThread):
-    def __init__(self):
-        super().__init__()
-        # 是否正在定时
-        self.time_counting = False
-        # 发送信息的函数
-        self.send_func = None
-        # 定时列表
-        self.clocks = None
-
-    def __del__(self):
-        self.wait()
-
-    def run(self):
-        while self.time_counting:
-            localtime = time.localtime(time.time())
-            hour = localtime.tm_hour % 24
-            min = localtime.tm_min % 60
-
-            for i in range(self.clocks.count()):
-                clock_hour, clock_min, st_ed = self.clocks.item(i).text().split(" ")
-                st, ed = st_ed.split('-')
-                if int(clock_hour) == hour and int(clock_min) == min:
-                    self.send_func(st=int(st), ed=int(ed))
-                    # self.send_func()
-            time.sleep(60)
-
-
-class MyListWidget(QListWidget):
-    """支持双击可编辑的QListWidget"""
-
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)  # 设置选择多个
-
-        # 双击可编辑
-        self.edited_item = self.currentItem()
-        self.close_flag = True
-        self.doubleClicked.connect(self.item_double_clicked)
-        self.currentItemChanged.connect(self.close_edit)
-
-    def keyPressEvent(self, e: QKeyEvent) -> None:
-        """回车事件，关闭edit"""
-        super().keyPressEvent(e)
-        if e.key() == Qt.Key_Return:
-            if self.close_flag:
-                self.close_edit()
-            self.close_flag = True
-
-    def edit_new_item(self) -> None:
-        """edit一个新的item"""
-        self.close_flag = False
-        self.close_edit()
-        count = self.count()
-        self.addItem('')
-        item = self.item(count)
-        self.edited_item = item
-        self.openPersistentEditor(item)
-        self.editItem(item)
-
-    def item_double_clicked(self, modelindex: QModelIndex) -> None:
-        """双击事件"""
-        self.close_edit()
-        item = self.item(modelindex.row())
-        self.edited_item = item
-        self.openPersistentEditor(item)
-        self.editItem(item)
-
-    def close_edit(self, *_) -> None:
-        """关闭edit"""
-        if self.edited_item and self.isPersistentEditorOpen(self.edited_item):
-            self.closePersistentEditor(self.edited_item)
+from module import *
 
 
 class WechatGUI(QWidget):
@@ -183,11 +108,20 @@ class WechatGUI(QWidget):
     def init_clock(self):
         # 按钮响应：增加时间
         def add_contact():
-            name, ok = QInputDialog.getText(self, '添加时间', "输入格式:'小时(0~23) 分钟(0~59) 发送信息的范围 (xx-xx) '，\n"
-                                                          "例 12 35 1-10 为12:35发送内容栏的第1条至第10条")
-            if ok:
-                if name != "":
-                    self.time_view.addItem(str(name))
+            inputs = ["小时（0~23）",
+                      "分钟(0~59)",
+                      "发送信息的起点（从哪一条开始发）",
+                      "发送信息的终点（到哪一条结束，包括该条）"]
+            dialog = MultiInputDialog(inputs)
+            if dialog.exec_() == QDialog.Accepted:
+                hour, min, st, ed = dialog.get_input()
+                if hour == "" or min == "" or st == "" or ed == "":
+                    QMessageBox.warning(self, "输入错误", "输入不能为空！")
+                    return
+                
+                else:
+                    input = f"{hour} {min} {st}-{ed}"
+                    self.time_view.addItem(input)
 
         # 按钮响应：删除时间
         def del_contact():
@@ -256,24 +190,30 @@ class WechatGUI(QWidget):
 
         # 增加一条文本信息
         def add_text():
-            # 设置默认的文本前缀
-            default = f"all:"
-            name, ok = QInputDialog.getText(self, '添加文本内容', '输入添加的内容:', text=default)
-            rank_str = f"{self.msg.count() + 1}:"
-            if ok:
-                if name != "all:":
+            inputs = ["请指定发送给哪些用户(1,2,3代表发送给前三位用户)，如需全部发送请忽略此项",
+                      "请输入发送的内容"]
+            dialog = MultiInputDialog(inputs)
+            if dialog.exec_() == QDialog.Accepted:
+                to, text = dialog.get_input()
+                to = "all" if to == "" else to
+                if text != "":
+                    # 消息的序号
+                    rank = self.msg.count() + 1
+                    
                     # 判断给文本是否是@信息
-                    if name[:3] == "at:":
-                        self.msg.addItem(rank_str+str(name))
+                    if text[:3] == "at:":
+                        self.msg.addItem(f"{rank}:at:{to}:{str(text[3:])}")
                     else:
-                        self.msg.addItem(rank_str+f"text:{str(name)}")
+                        self.msg.addItem(f"{rank}:text:{to}:{str(text)}")
 
         # 增加一个文件
         def add_file():
-            path = QFileDialog.getOpenFileName(self, '打开文件', '/home')[0]
-            rank_str = f"{self.msg.count() + 1}:"
-            if path != "":
-                self.msg.addItem(rank_str+f"file:{str(path)}")
+            dialog = FileDialog()
+            if dialog.exec_() == QDialog.Accepted:
+                to, path = dialog.get_input()
+                to = "all" if to == "" else to
+                if path != "":
+                    self.msg.addItem(f"{self.msg.count()+1}:file:{to}:{str(path)}")
 
         # 删除一条发送的信息
         def del_content():
@@ -292,26 +232,29 @@ class WechatGUI(QWidget):
             if st is None:
                 st = 1
                 ed = self.msg.count()
-
+            
+            # 获得用户编号列表
             for user_i in range(self.contacts_view.count()):
-                name = self.contacts_view.item(user_i).text()
+                rank, name = self.contacts_view.item(user_i).text().split(':', 1)
 
                 for msg_i in range(st-1, ed):
                     msg = self.msg.item(msg_i).text()
 
-                    _, type, content = msg.split(':', 2)
-
-                    # 判断为文本内容
-                    if type == "text":
-                        self.wechat.send_msg(name, content)
-
-                    # 判断为文件内容
-                    elif type == "file":
-                        self.wechat.send_file(name, content)
-
-                    # 判断为@他人
-                    elif type == "at":
-                        self.wechat.at(name, content)
+                    _, type, to, content = msg.split(':', 3)
+                    
+                    # 判断是否需要发送给该用户
+                    if to == "all" or str(rank) in to.split(','):
+                        # 判断为文本内容
+                        if type == "text":
+                            self.wechat.send_msg(name, content)
+    
+                        # 判断为文件内容
+                        elif type == "file":
+                            self.wechat.send_file(name, content)
+    
+                        # 判断为@他人
+                        elif type == "at":
+                            self.wechat.at(name, content)
 
         # 左边的布局
         vbox_left = QVBoxLayout()
@@ -398,7 +341,7 @@ class WechatGUI(QWidget):
 
         self.setLayout(vbox)
         self.setFixedSize(500, 700)
-        self.setWindowTitle('EasyChat微信助手')
+        self.setWindowTitle('EasyChat微信助手(作者：LTEnjoy)')
         self.show()
 
     # 选择微信exe路径
