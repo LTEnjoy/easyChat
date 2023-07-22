@@ -203,11 +203,11 @@ class WeChat:
 		self.press_enter()
 	
 	# 识别聊天内容的类型
-	# 0：用户发送    1：时间信息  2：红包信息  3：”查看更多消息“标志
+	# 0：用户发送    1：时间信息  2：红包信息  3：”查看更多消息“标志 4：撤回消息
 	def _detect_type(self, list_item_control: auto.ListItemControl) -> int:
 		value = None
-		# 判断内容框是否为时间框，如果是时间框则列表为空
-		if len(list_item_control.PaneControl().GetChildren()) == 0:
+		# 判断内容框是否为时间框，如果是时间框则子控件不是PaneControl
+		if not isinstance(list_item_control.GetFirstChildControl(), auto.PaneControl):
 			value = 1
 		
 		else:
@@ -224,6 +224,12 @@ class WeChat:
 			# 或者是红包信息
 			elif "红包" in list_item_control.Name:
 				value = 2
+			# 或者是撤回消息
+			elif "撤回了一条消息" in list_item_control.Name:
+				value = 4
+				
+		if value is None:
+			raise ValueError("无法识别该控件类型")
 		
 		return value
 	
@@ -256,10 +262,10 @@ class WeChat:
 			# 否则点击“查看更多消息”
 			else:
 				click(first_item)
-		
+
 		cnt = 0
 		dialogs = []
-		value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志'}
+		value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息'}
 		# 从下往上依次记录聊天内容。
 		for list_item_control in list_control.GetChildren()[::-1]:
 			v = self._detect_type(list_item_control)
@@ -279,7 +285,7 @@ class WeChat:
 
 
 if __name__ == '__main__':
-	wechat_path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+	wechat_path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
 	wechat = WeChat(wechat_path)
 	
 	name = "文件传输助手"
@@ -289,5 +295,9 @@ if __name__ == '__main__':
 	# wechat.send_msg(name, text)
 	# wechat.send_file(name, file)
 	
-	contacts = wechat.find_all_contacts()
-	print(len(contacts))
+	# contacts = wechat.find_all_contacts()
+	# print(len(contacts))
+	
+	res = wechat.get_dialogs("easychat", 100)
+	for i in res:
+		print(i)
