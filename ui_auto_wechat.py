@@ -272,7 +272,6 @@ class WeChat:
         cnt = 0
         while cnt < num:
             ori_cnt = cnt
-            print(id(list_control.GetFirstChildControl()))
             for list_item_control in list_control.GetChildren()[::-1]:
                 # 如果标签不是图片则跳过
                 if len(list_item_control.GetFirstChildControl().GetChildren()) == 3:
