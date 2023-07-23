@@ -290,16 +290,18 @@ class WeChat:
                     
                     # 获取图片路径防止重复存储
                     pic_hash = ImageGrab.grabclipboard()[0]
+
+                    # 获取后缀
+                    suffix = pic_hash.split(".")[-1]
                     
                     # 保存图片
                     if pic_hash not in pictures:
-                        save_path = os.path.join(save_dir, f"{cnt}.png")
-                        self.app.clipboard().image().save(save_path)
                         cnt += 1
                         pictures.add(pic_hash)
-            
+                        save_path = os.path.join(save_dir, f"{cnt}.{suffix}")
+                        os.system(f"copy \"{pic_hash}\" \"{save_path}\"")
             # 上滑
-            pyautogui.scroll(10000)
+            pyautogui.scroll(300)
             # 如果无法上滑则退出
             if ori_cnt == cnt:
                 break
@@ -352,7 +354,7 @@ class WeChat:
 
 
 if __name__ == '__main__':
-    wechat_path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    wechat_path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(wechat_path)
     
     name = "文件传输助手"
@@ -369,4 +371,4 @@ if __name__ == '__main__':
     # for i in res:
     #     print(i)
     
-    wechat.save_dialog_pictures("xxx", 10, "C:/Users/Dell/Desktop/")
+    wechat.save_dialog_pictures("xx", 15, "C:/Users/LTEnj/Desktop/")
