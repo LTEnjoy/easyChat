@@ -62,7 +62,7 @@ class WeChat:
         
         # 自动回复的内容
         self.auto_reply_msg = "[自动回复]您好，我现在正在忙，稍后会主动联系您，感谢理解。"
-    
+        
     # 打开微信客户端
     def open_wechat(self):
         subprocess.Popen(self.path)

@@ -21,6 +21,14 @@ class WechatGUI(QWidget):
 
         # 初始化图形界面
         self.initUI()
+        
+        # 判断全局热键是否被按下
+        self.hotkey_pressed = False
+        keyboard.add_hotkey('ctrl+alt', self.hotkey_press)
+    
+    def hotkey_press(self):
+        print("hotkey pressed")
+        self.hotkey_pressed = True
 
     # 选择用户界面的初始化
     def init_choose_contacts(self):
@@ -228,33 +236,49 @@ class WechatGUI(QWidget):
 
         # 发送按钮响应事件
         def send_msg(gap=None, st=None, ed=None):
-            # 如果未定义范围的开头和结尾，则默认发送全部信息
-            if st is None:
-                st = 1
-                ed = self.msg.count()
+            # 在每次发送时进行初始化
+            self.hotkey_pressed = False
             
-            # 获得用户编号列表
-            for user_i in range(self.contacts_view.count()):
-                rank, name = self.contacts_view.item(user_i).text().split(':', 1)
-
-                for msg_i in range(st-1, ed):
-                    msg = self.msg.item(msg_i).text()
-
-                    _, type, to, content = msg.split(':', 3)
-                    
-                    # 判断是否需要发送给该用户
-                    if to == "all" or str(rank) in to.split(','):
-                        # 判断为文本内容
-                        if type == "text":
-                            self.wechat.send_msg(name, content)
+            try:
+                # 如果未定义范围的开头和结尾，则默认发送全部信息
+                if st is None:
+                    st = 1
+                    ed = self.msg.count()
+                
+                # 获得用户编号列表
+                for user_i in range(self.contacts_view.count()):
+                    rank, name = self.contacts_view.item(user_i).text().split(':', 1)
     
-                        # 判断为文件内容
-                        elif type == "file":
-                            self.wechat.send_file(name, content)
+                    for msg_i in range(st-1, ed):
+                        # 如果全局热键被按下，则停止发送
+                        if self.hotkey_pressed is True:
+                            QMessageBox.warning(self, "发送失败", f"热键已按下，已停止发送！")
+                            return
+                        
+                        msg = self.msg.item(msg_i).text()
     
-                        # 判断为@他人
-                        elif type == "at":
-                            self.wechat.at(name, content)
+                        _, type, to, content = msg.split(':', 3)
+                        
+                        # 判断是否需要发送给该用户
+                        if to == "all" or str(rank) in to.split(','):
+                            # 判断为文本内容
+                            if type == "text":
+                                self.wechat.send_msg(name, content)
+        
+                            # 判断为文件内容
+                            elif type == "file":
+                                self.wechat.send_file(name, content)
+        
+                            # 判断为@他人
+                            elif type == "at":
+                                self.wechat.at(name, content)
+                        
+                        else:
+                            raise
+            
+            except Exception:
+                QMessageBox.warning(self, "发送失败", f"发送失败！请检查内容格式或是否有遗漏步骤！")
+                return
 
         # 左边的布局
         vbox_left = QVBoxLayout()

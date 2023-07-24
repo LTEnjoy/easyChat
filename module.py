@@ -1,6 +1,7 @@
 import sys
 import time
-
+import threading
+import keyboard
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
