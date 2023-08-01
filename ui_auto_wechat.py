@@ -102,6 +102,8 @@ class WeChat:
         
         else:
             auto.SendKeys(f"@{at_name}")
+            # 按下回车键确认要at的人
+            auto.SendKeys("{enter}")
             self.press_enter()
     
     # 搜索指定用户名的联系人发送信息
