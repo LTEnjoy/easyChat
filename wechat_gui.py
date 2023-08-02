@@ -272,10 +272,7 @@ class WechatGUI(QWidget):
                             # 判断为@他人
                             elif type == "at":
                                 self.wechat.at(name, content)
-                        
-                        else:
-                            raise
-            
+
             except Exception:
                 QMessageBox.warning(self, "发送失败", f"发送失败！请检查内容格式或是否有遗漏步骤！")
                 return
