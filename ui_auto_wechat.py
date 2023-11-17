@@ -320,8 +320,7 @@ class WeChat:
         """
         list_control = self._get_chat_frame(name)
         scroll_pattern = list_control.GetScrollPattern()
-        move(scroll_pattern)
-        
+
         # 如果聊天记录数量 < n_msg，则继续往上翻直到满足条件或无法上翻为止
         while len(list_control.GetChildren()) < n_msg:
             # 将聊天记录翻到“查看更多消息”
@@ -360,8 +359,8 @@ if __name__ == '__main__':
     wechat = WeChat(wechat_path)
     
     name = "文件传输助手"
-    text = "你好"
-    file = "C:/Users/Dell/Pictures/takagi.jpeg"
+    # text = "你好"
+    # file = "C:/Users/Dell/Pictures/takagi.jpeg"
     
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
@@ -373,4 +372,4 @@ if __name__ == '__main__':
     # for i in res:
     #     print(i)
     
-    wechat.save_dialog_pictures("xx", 15, "C:/Users/LTEnj/Desktop/")
+    # wechat.save_dialog_pictures("xx", 15, "C:/Users/LTEnj/Desktop/")
