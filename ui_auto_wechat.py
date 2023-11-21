@@ -179,29 +179,41 @@ class WeChat:
         return list(set(contacts))
     
     # 检测微信是否收到新消息
-    def check_new_msg(self):
+    def check_new_msg(self, click_msg: bool = False):
+        """
+        Args:
+            click_msg: 是否点击新消息确认已读
+
+        """
         self.open_wechat()
         self.get_wechat()
         
         # 获取左侧聊天按钮
         chat_btn = auto.ButtonControl(Name="聊天")
-        item = auto.ListItemControl()
+        item = auto.ListItemControl(Depth=10)
         double_click(chat_btn)
         # 持续点击聊天按钮，直到获取完全部新消息
         first_name = item.Name
+        last_name = item.Name
         while True:
             print(item.Name)
             # 判断该联系人是否需要自动回复
             if item.Name in self.auto_reply_contacts:
-                self.auto_reply(item, self.auto_reply_msg)
+                self._auto_reply(item, self.auto_reply_msg)
                 # print("需要自动回复")
+            
+            elif click_msg:
+                click(item)
             
             # 跳转到下一个新消息
             double_click(chat_btn)
-            item = auto.ListItemControl()
+            item = auto.ListItemControl(Depth=10)
+            
             # 已经完成遍历，退出循环
-            if first_name == item.Name:
+            if first_name == item.Name or last_name == item.Name:
                 break
+            
+            last_name = item.Name
     
     # 设置自动回复的联系人
     def set_auto_reply(self, contacts):
@@ -209,7 +221,7 @@ class WeChat:
         self.auto_reply_contacts = contacts
     
     # 自动回复
-    def auto_reply(self, element, text):
+    def _auto_reply(self, element, text):
         click(element)
         pyperclip.copy(text)
         auto.SendKeys("{Ctrl}v")
@@ -355,12 +367,15 @@ class WeChat:
 
 
 if __name__ == '__main__':
-    wechat_path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    # wechat_path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    wechat_path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(wechat_path)
     
     name = "文件传输助手"
-    # text = "你好"
-    # file = "C:/Users/Dell/Pictures/takagi.jpeg"
+    text = "你好"
+    file = "C:/Users/Dell/Pictures/takagi.jpeg"
+    
+    wechat.check_new_msg(click_msg=True)
     
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
