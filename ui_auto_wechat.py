@@ -185,28 +185,33 @@ class WeChat:
         
         # 获取左侧聊天按钮
         chat_btn = auto.ButtonControl(Name="聊天")
-        item = auto.ListItemControl(Depth=10)
         double_click(chat_btn)
+        
         # 持续点击聊天按钮，直到获取完全部新消息
-        first_name = item.ButtonControl().Name
-        last_name = item.ButtonControl().Name
+        item = auto.ListItemControl(Depth=10)
+        prev_name = item.ButtonControl().Name
+        
         while True:
-            # 判断该联系人是否需要自动回复
-            if item.ButtonControl().Name in self.auto_reply_contacts:
-                self._auto_reply(item, self.auto_reply_msg)
-            
-            else:
-                click(item)
+            # 判断该联系人是否有新消息
+            pane_control = item.PaneControl()
+            if len(pane_control.GetChildren()) == 3:
+                print(f"{item.ButtonControl().Name} 有新消息")
+                # 判断该联系人是否需要自动回复
+                if item.ButtonControl().Name in self.auto_reply_contacts:
+                    print(f"自动回复 {item.ButtonControl().Name}")
+                    self._auto_reply(item, self.auto_reply_msg)
+                
+            click(item)
             
             # 跳转到下一个新消息
             double_click(chat_btn)
             item = auto.ListItemControl(Depth=10)
             
             # 已经完成遍历，退出循环
-            if first_name == item.ButtonControl().Name or last_name == item.ButtonControl().Name:
+            if prev_name == item.ButtonControl().Name:
                 break
             
-            last_name = item.ButtonControl().Name
+            prev_name = item.ButtonControl().Name
     
     # 设置自动回复的联系人
     def set_auto_reply(self, contacts):
