@@ -179,10 +179,10 @@ class WeChat:
         return list(set(contacts))
     
     # 检测微信是否收到新消息
-    def check_new_msg(self, click_msg: bool = False):
+    def check_new_msg(self, click_msg: bool = True):
         """
         Args:
-            click_msg: 是否点击新消息确认已读
+            click_msg: 是否点击新消息确认已读。如果关闭可能导致循环卡顿（双击聊天按钮始终无法跳到下一个新消息）
 
         """
         self.open_wechat()
@@ -375,7 +375,7 @@ if __name__ == '__main__':
     text = "你好"
     file = "C:/Users/Dell/Pictures/takagi.jpeg"
     
-    wechat.check_new_msg(click_msg=True)
+    wechat.check_new_msg()
     
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
