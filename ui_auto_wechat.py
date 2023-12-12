@@ -5,6 +5,9 @@ import numpy as np
 import pyperclip
 import os
 import pyautogui
+import qianfan
+import json
+import random
 
 from PIL import ImageGrab
 from clipboard import setClipboardFiles
@@ -61,7 +64,11 @@ class WeChat:
         self.auto_reply_contacts = []
         
         # 自动回复的内容
-        self.auto_reply_msg = "[自动回复]您好，我现在正在忙，稍后会主动联系您，感谢理解。"
+        self.auto_reply_msg = ["唉", "我也觉得是", "确实是这样", "这倒是真的", "不会吧", "卧槽", "那确实", "没毛病", "嗯嗯", "哎"]
+
+        self.chat_comp = qianfan.ChatCompletion()
+
+        self.retard_list = []
         
     # 打开微信客户端
     def open_wechat(self):
@@ -86,6 +93,9 @@ class WeChat:
         search_box.SendKeys("{enter}")
     
     # 鼠标移动到发送按钮处点击发送消息
+    def set_retard_list(self, retard_list):
+        self.retard_list = retard_list
+    
     def press_enter(self):
         # 获取发送按钮
         send_button = auto.ButtonControl(Depth=15, Name="发送(S)")
@@ -194,24 +204,41 @@ class WeChat:
         while True:
             # 判断该联系人是否有新消息
             pane_control = item.PaneControl()
-            if len(pane_control.GetChildren()) == 3:
+            temp = pane_control.GetChildren()
+            if len(temp) == 3:
                 print(f"{item.ButtonControl().Name} 有新消息")
+                
                 # 判断该联系人是否需要自动回复
                 if item.ButtonControl().Name in self.auto_reply_contacts:
-                    print(f"自动回复 {item.ButtonControl().Name}")
-                    self._auto_reply(item, self.auto_reply_msg)
-                
+                    dialogs = self.get_dialogs(item.ButtonControl().Name, 1)[0]
+                    resp = ""
+                    if dialogs[0] == "撤回消息" or dialogs[2].startswith( '[' ):
+                        print("触发了无法识别的消息类型，自动回复哈哈哈")
+                        resp = '哈哈哈哈哈'
+                        self._auto_reply(item, resp)
+                    elif prev_name in self.retard_list:
+                        print("恼蚕群回点弱智内容就行")
+                        resp = self.auto_reply_msg[random.randint(0, len(self.auto_reply_msg) - 1)]
+                        self._auto_reply(item, resp)
+                    else:
+                        print("调用了千帆来认真的敷衍")
+                        resp = self.get_result(dialogs[2])["msg"]
+                        self._auto_reply(item, resp)
+                    print(f"自动回复 {item.ButtonControl().Name} : {resp}")
+                    time.sleep(5)
+
             click(item)
-            
+        
             # 跳转到下一个新消息
             double_click(chat_btn)
             item = auto.ListItemControl(Depth=10)
             
             # 已经完成遍历，退出循环
-            if prev_name == item.ButtonControl().Name:
-                break
+            # if prev_name == item.ButtonControl().Name:
+            #     break
             
             prev_name = item.ButtonControl().Name
+        
     
     # 设置自动回复的联系人
     def set_auto_reply(self, contacts):
@@ -364,20 +391,37 @@ class WeChat:
         return dialogs
 
 
-if __name__ == '__main__':
-    # wechat_path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    wechat_path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    wechat = WeChat(wechat_path)
-    
-    name = "文件传输助手"
-    text = "你好"
-    file = "C:/Users/Dell/Pictures/takagi.jpeg"
-    
-    auto_reply_names = ["周禧彬0313"]
-    wechat.set_auto_reply(auto_reply_names)
-    
-    wechat.check_new_msg()
-    
+
+    #从qianfan大模型中获取回复，用于自动回复
+    def get_result(self, str) -> dict:
+        prompt = "你是一个聊天助手，我会给你一个消息，你需要对这个消息做出回复，回复的规则如下，你需要严格遵守这个规则，不能回复我给定词之外的其他词语：\
+        如果言语具有攻击性，你只能回复：“别急”或者劝他人冷静的话，但是必须包含别急，\
+        如果言语只是单纯表达观点，或陈述观点，你只能回复诸如：“这倒是真的”，“确实”，“没错”等无意义的附和消息，一定不要回复任何有意义的话语，\
+        如果言语意义不明，你只能回复：“老馋吗”\
+        如果内容令人感到不适，你要回复：“好恶心”；\
+        如果言语包含赞美或喜爱的情绪，你只能回复：“嘻嘻”或着“么么”等表达喜爱的话语\
+        如果消息是一个问题，如果这个问题是选择性的，你可以尝试回答；如果这是一个开放性的问题，你只能回复：“不知道”\
+        你的回复不能超过20个字。\
+        你需要返回给我一个json格式的代码，这个json代码一定要包含\"msg\"字段，\"msg\"字段中包含着你的回复。\
+        且json代码中不能包含换行符号（即\\n符号）以及代码块（即```符号），否则你的回复无效\
+        消息如下："
+        
+        input = prompt + str
+        resp = self.chat_comp.do(model="XuanYuan-70B-Chat-4bit", messages=[{
+            "role": "user",
+            "content": input
+        }])
+        response = resp["body"]["result"]
+        response = response[1:-4]
+        try:
+            result = json.loads(response)
+        except :
+            print("json解析失败，回复颜文字")
+            result = {"msg": "Σ(°ロ°)"}
+        return result
+
+
+
     # wechat.send_msg(name, text)
     # wechat.send_file(name, file)
     
