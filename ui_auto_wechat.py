@@ -12,6 +12,8 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QMimeData, QUrl
 from typing import List
 
+from wechat_locale import WeChatLocale
+
 
 # 鼠标移动到控件上
 def move(element):
@@ -50,7 +52,7 @@ def double_click(element):
 
 
 class WeChat:
-    def __init__(self, path):
+    def __init__(self, path, locale="zh-CN"):
         # 微信打开路径
         self.path = path
         
@@ -63,20 +65,22 @@ class WeChat:
         # 自动回复的内容
         self.auto_reply_msg = "[自动回复]您好，我现在正在忙，稍后会主动联系您，感谢理解。"
         
+        self.lc = WeChatLocale(locale)
+        
     # 打开微信客户端
     def open_wechat(self):
         subprocess.Popen(self.path)
     
     # 搜寻微信客户端控件
     def get_wechat(self):
-        return auto.WindowControl(Depth=1, Name="微信")
+        return auto.WindowControl(Depth=1, Name=self.lc.weixin)
     
     # 搜索指定用户
     def get_contact(self, name):
         self.open_wechat()
         self.get_wechat()
         
-        search_box = auto.EditControl(Depth=8, Name="搜索")
+        search_box = auto.EditControl(Depth=8, Name=self.lc.search)
         click(search_box)
         
         pyperclip.copy(name)
@@ -88,7 +92,7 @@ class WeChat:
     # 鼠标移动到发送按钮处点击发送消息
     def press_enter(self):
         # 获取发送按钮
-        send_button = auto.ButtonControl(Depth=15, Name="发送(S)")
+        send_button = auto.ButtonControl(Depth=15, Name=self.lc.send)
         click(send_button)
     
     # 在指定群聊中@他人（若@所有人需具备@所有人权限）
@@ -135,11 +139,11 @@ class WeChat:
         self.get_wechat()
         
         # 获取通讯录管理界面
-        click(auto.ButtonControl(Name="通讯录"))
-        list_control = auto.ListControl(Name="联系人")
+        click(auto.ButtonControl(Name=self.lc.contacts))
+        list_control = auto.ListControl(Name=self.lc.contact)
         scroll_pattern = list_control.GetScrollPattern()
         scroll_pattern.SetScrollPercent(-1, 0)
-        contacts_menu = list_control.ButtonControl(Name="通讯录管理")
+        contacts_menu = list_control.ButtonControl(Name=self.lc.manage_contacts)
         click(contacts_menu)
         
         # 切换到通讯录管理界面
@@ -184,7 +188,7 @@ class WeChat:
         self.get_wechat()
         
         # 获取左侧聊天按钮
-        chat_btn = auto.ButtonControl(Name="聊天")
+        chat_btn = auto.ButtonControl(Name=self.lc.chats)
         double_click(chat_btn)
         
         # 持续点击聊天按钮，直到获取完全部新消息
@@ -259,7 +263,7 @@ class WeChat:
     # 获取聊天窗口
     def _get_chat_frame(self, name: str):
         self.get_contact(name)
-        return auto.ListControl(Name="消息")
+        return auto.ListControl(Name=self.lc.message)
     
     def save_dialog_pictures(self, name: str, num: int, save_dir: str) -> None:
         """
@@ -272,11 +276,11 @@ class WeChat:
         
         # 进入图片聊天记录界面
         self.get_contact(name)
-        click(auto.ButtonControl(Name="聊天记录", Depth=14))
-        click(auto.TabItemControl(Name="图片与视频", Depth=6))
+        click(auto.ButtonControl(Name=self.lc.chat_history, Depth=14))
+        click(auto.TabItemControl(Name=self.lc.photos_n_videos, Depth=6))
         
         # 图片栏控件
-        list_control = auto.ListControl(Name="图片与视频", Depth=6)
+        list_control = auto.ListControl(Name=self.lc.photos_n_videos, Depth=6)
         
         # 如果图片数量 < num，则继续往上翻直到满足条件或无法上翻为止
         move(list_control.GetLastChildControl())
@@ -295,10 +299,10 @@ class WeChat:
                     menu = auto.ListControl(Depth=4)
                     copy = menu.GetFirstChildControl()
                     # 如果图片已经被清理则跳过
-                    if copy.Name != "复制":
+                    if copy.Name != self.lc.copy:
                         continue
                     else:
-                        click(auto.MenuItemControl(Name="复制", Depth=5))
+                        click(auto.MenuItemControl(Name=self.lc.copy, Depth=5))
                     
                     # 获取图片路径防止重复存储
                     pic_hash = ImageGrab.grabclipboard()[0]
@@ -345,7 +349,7 @@ class WeChat:
 
         cnt = 0
         dialogs = []
-        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息'}
+        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: "System Notification"}
         # 从下往上依次记录聊天内容。
         for list_item_control in list_control.GetChildren()[::-1]:
             v = self._detect_type(list_item_control)
@@ -362,30 +366,3 @@ class WeChat:
         # 将聊天记录列表翻转
         dialogs = dialogs[::-1]
         return dialogs
-
-
-if __name__ == '__main__':
-    # wechat_path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    wechat_path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    wechat = WeChat(wechat_path)
-    
-    name = "文件传输助手"
-    text = "你好"
-    file = "C:/Users/Dell/Pictures/takagi.jpeg"
-    
-    auto_reply_names = ["周禧彬0313"]
-    wechat.set_auto_reply(auto_reply_names)
-    
-    wechat.check_new_msg()
-    
-    # wechat.send_msg(name, text)
-    # wechat.send_file(name, file)
-    
-    # contacts = wechat.find_all_contacts()
-    # print(len(contacts))
-    
-    # res = wechat.get_dialogs("easychat", 100)
-    # for i in res:
-    #     print(i)
-    
-    # wechat.save_dialog_pictures("xx", 15, "C:/Users/LTEnj/Desktop/")
