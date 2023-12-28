@@ -366,3 +366,14 @@ class WeChat:
         # 将聊天记录列表翻转
         dialogs = dialogs[::-1]
         return dialogs
+
+
+if __name__ == '__main__':
+    # 测试
+    path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    wechat = WeChat(path, locale="zh-CN")
+
+    name = "文件传输助手"
+    msg = "你好"
+
+    wechat.send_msg(name, msg)
