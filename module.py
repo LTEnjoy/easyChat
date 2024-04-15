@@ -27,13 +27,17 @@ class ClockThread(QThread):
     def run(self):
         while self.time_counting:
             localtime = time.localtime(time.time())
+            year = localtime.tm_year
+            month = localtime.tm_mon
+            day = localtime.tm_mday
             hour = localtime.tm_hour % 24
             min = localtime.tm_min % 60
 
             for i in range(self.clocks.count()):
-                clock_hour, clock_min, st_ed = self.clocks.item(i).text().split(" ")
+                clock_year, clock_month, clock_day, clock_hour, clock_min, st_ed = self.clocks.item(i).text().split(" ")
                 st, ed = st_ed.split('-')
-                if int(clock_hour) == hour and int(clock_min) == min:
+                if (int(clock_hour) == hour and int(clock_min) == min and int(clock_year) == year and
+                        int(clock_month) == month and int(clock_day) == day):
                     self.send_func(st=int(st), ed=int(ed))
                     # self.send_func()
             time.sleep(60)
@@ -88,17 +92,23 @@ class MultiInputDialog(QDialog):
     """
     用于用户输入的输入框，可以根据传入的参数自动创建输入框
     """
-    def __init__(self, inputs: list, parent=None) -> None:
+    def __init__(self, inputs: list, default_values: list = None, parent=None) -> None:
         """
         inputs: list, 代表需要input的标签，如['姓名', '年龄']
+        default_values: list, 代表默认值，如['张三', '18']
         """
         super().__init__(parent)
         
         layout = QVBoxLayout(self)
         self.inputs = []
-        for i in inputs:
+        for n, i in enumerate(inputs):
             layout.addWidget(QLabel(i))
             input = QLineEdit(self)
+
+            # 设置默认值
+            if default_values is not None:
+                input.setText(default_values[n])
+
             layout.addWidget(input)
             self.inputs.append(input)
             

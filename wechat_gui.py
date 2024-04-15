@@ -116,19 +116,37 @@ class WechatGUI(QWidget):
     def init_clock(self):
         # 按钮响应：增加时间
         def add_contact():
-            inputs = ["小时（0~23）",
-                      "分钟(0~59)",
-                      "发送信息的起点（从哪一条开始发）",
-                      "发送信息的终点（到哪一条结束，包括该条）"]
-            dialog = MultiInputDialog(inputs)
+            inputs = [
+                "年 (例：2024)",
+                "月 (1~12)",
+                "日 (1~31)",
+                "小时（0~23）",
+                "分钟 (0~59)",
+                "发送信息的起点（从哪一条开始发）",
+                "发送信息的终点（到哪一条结束，包括该条）",
+            ]
+
+            # 设置默认值为当前时间
+            local_time = time.localtime(time.time())
+            default_values = [
+                str(local_time.tm_year),
+                str(local_time.tm_mon),
+                str(local_time.tm_mday),
+                str(local_time.tm_hour),
+                str(local_time.tm_min),
+                "",
+                "",
+            ]
+
+            dialog = MultiInputDialog(inputs, default_values)
             if dialog.exec_() == QDialog.Accepted:
-                hour, min, st, ed = dialog.get_input()
-                if hour == "" or min == "" or st == "" or ed == "":
+                year, month, day, hour, min, st, ed = dialog.get_input()
+                if year == "" or month == "" or day == "" or hour == "" or min == "" or st == "" or ed == "":
                     QMessageBox.warning(self, "输入错误", "输入不能为空！")
                     return
                 
                 else:
-                    input = f"{hour} {min} {st}-{ed}"
+                    input = f"{year} {month} {day} {hour} {min} {st}-{ed}"
                     self.time_view.addItem(input)
 
         # 按钮响应：删除时间
