@@ -165,12 +165,28 @@ class WechatGUI(QWidget):
             info.setStyleSheet("color:red")
             info.setText("定时发送（目前已开始）")
             self.clock.start()
-
+        
         # 按钮响应：结束定时
         def end_counting():
             self.clock.time_counting = False
             info.setStyleSheet("color:black")
             info.setText("定时发送（目前未开始）")
+        
+        # 按钮相应：开启防止自动下线。开启后每隔一分钟自动点击微信窗口，防止自动下线
+        def prevent_offline():
+            if self.clock.prevent_offline is True:
+                self.clock.prevent_offline = False
+                prevent_btn.setStyleSheet("color:black")
+                prevent_btn.setText("防止自动下线：（目前关闭）")
+            
+            else:
+                # 弹出提示框
+                QMessageBox.information(self, "防止自动下线", "防止自动下线已开启！每隔一分钟自动点击微信窗口，防"
+                                                              "止自动下线。请不要在正常使用电脑时使用该策略。")
+                
+                self.clock.prevent_offline = True
+                prevent_btn.setStyleSheet("color:red")
+                prevent_btn.setText("防止自动下线：（目前开启）")
 
         hbox = QHBoxLayout()
 
@@ -192,12 +208,15 @@ class WechatGUI(QWidget):
         start_btn.clicked.connect(start_counting)
         end_btn = QPushButton("结束定时")
         end_btn.clicked.connect(end_counting)
+        prevent_btn = QPushButton("防止自动下线：（目前关闭）")
+        prevent_btn.clicked.connect(prevent_offline)
 
         vbox.addWidget(info)
         vbox.addWidget(add_btn)
         vbox.addWidget(del_btn)
         vbox.addWidget(start_btn)
         vbox.addWidget(end_btn)
+        vbox.addWidget(prevent_btn)
         hbox.addLayout(vbox)
 
         return hbox
@@ -304,6 +323,7 @@ class WechatGUI(QWidget):
         # 输入内容框
         self.msg = MyListWidget()
         self.clock.send_func = send_msg
+        self.clock.prevent_func = self.wechat.prevent_offline
 
         # 发送按钮
         send_btn = QPushButton("发送")

@@ -20,6 +20,9 @@ class ClockThread(QThread):
         self.send_func = None
         # 定时列表
         self.clocks = None
+        # 是否防止自动下线
+        self.prevent_offline = False
+        self.prevent_func = None
 
     def __del__(self):
         self.wait()
@@ -40,6 +43,9 @@ class ClockThread(QThread):
                         int(clock_month) == month and int(clock_day) == day):
                     self.send_func(st=int(st), ed=int(ed))
                     # self.send_func()
+                    
+            if self.prevent_offline:
+                self.prevent_func()
             time.sleep(60)
 
 

@@ -75,6 +75,14 @@ class WeChat:
     def get_wechat(self):
         return auto.WindowControl(Depth=1, Name=self.lc.weixin)
     
+    # 防止微信长时间挂机导致掉线
+    def prevent_offline(self):
+        self.open_wechat()
+        self.get_wechat()
+        
+        search_box = auto.EditControl(Depth=8, Name=self.lc.search)
+        click(search_box)
+    
     # 搜索指定用户
     def get_contact(self, name):
         self.open_wechat()
