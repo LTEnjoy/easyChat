@@ -23,11 +23,14 @@ class ClockThread(QThread):
         # 是否防止自动下线
         self.prevent_offline = False
         self.prevent_func = None
+        # 每隔多少分钟进行一次防止自动下线操作
+        self.prevent_count = 60
 
     def __del__(self):
         self.wait()
 
     def run(self):
+        cnt = 60
         while self.time_counting:
             localtime = time.localtime(time.time())
             year = localtime.tm_year
@@ -44,9 +47,11 @@ class ClockThread(QThread):
                     self.send_func(st=int(st), ed=int(ed))
                     # self.send_func()
                     
-            if self.prevent_offline:
+            if self.prevent_offline and cnt % self.prevent_count == 0:
                 self.prevent_func()
+
             time.sleep(60)
+            cnt += 1
 
 
 class MyListWidget(QListWidget):

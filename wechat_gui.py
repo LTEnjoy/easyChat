@@ -172,7 +172,7 @@ class WechatGUI(QWidget):
             info.setStyleSheet("color:black")
             info.setText("定时发送（目前未开始）")
         
-        # 按钮相应：开启防止自动下线。开启后每隔一分钟自动点击微信窗口，防止自动下线
+        # 按钮相应：开启防止自动下线。开启后每隔一小时自动点击微信窗口，防止自动下线
         def prevent_offline():
             if self.clock.prevent_offline is True:
                 self.clock.prevent_offline = False
@@ -181,7 +181,7 @@ class WechatGUI(QWidget):
             
             else:
                 # 弹出提示框
-                QMessageBox.information(self, "防止自动下线", "防止自动下线已开启！每隔一分钟自动点击微信窗口，防"
+                QMessageBox.information(self, "防止自动下线", "防止自动下线已开启！每隔一小时自动点击微信窗口，防"
                                                               "止自动下线。请不要在正常使用电脑时使用该策略。")
                 
                 self.clock.prevent_offline = True
