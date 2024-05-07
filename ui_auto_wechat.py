@@ -346,7 +346,8 @@ class WeChat:
         # 如果聊天记录数量 < n_msg，则继续往上翻直到满足条件或无法上翻为止
         while len(list_control.GetChildren()) < n_msg:
             # 将聊天记录翻到“查看更多消息”
-            scroll_pattern.SetScrollPercent(-1, 0)
+            if scroll_pattern:
+                scroll_pattern.SetScrollPercent(-1, 0)
             # 如果无法上翻则退出
             first_item = list_control.GetFirstChildControl()
             if self._detect_type(first_item) != 3:
