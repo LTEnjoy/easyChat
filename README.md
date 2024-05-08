@@ -14,7 +14,7 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 #### 2024/05/08
 
-- 修复了获取聊天记录时滚动条不显示时的逻辑bug，见 https://github.com/LTEnjoy/easyChat/pull/45。[@T-K-233](https://github.com/T-K-233)
+- 修复了获取聊天记录时滚动条不显示时的逻辑bug，见[PR](https://github.com/LTEnjoy/easyChat/pull/45)。感谢[@T-K-233](https://github.com/T-K-233)。
 
 #### 2024/05/03
 
