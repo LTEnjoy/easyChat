@@ -345,8 +345,9 @@ class WeChat:
 
         # 如果聊天记录数量 < n_msg，则继续往上翻直到满足条件或无法上翻为止
         while len(list_control.GetChildren()) < n_msg:
-            # 将聊天记录翻到“查看更多消息”
-            scroll_pattern.SetScrollPercent(-1, 0)
+            # 如果滑轮存在，将聊天记录翻到“查看更多消息”
+            if scroll_pattern:
+                scroll_pattern.SetScrollPercent(-1, 0)
             # 如果无法上翻则退出
             first_item = list_control.GetFirstChildControl()
             if self._detect_type(first_item) != 3:
@@ -381,7 +382,9 @@ if __name__ == '__main__':
     path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
 
-    name = "文件传输助手"
-    msg = "你好"
+    name = "杨志赫 港中文"
+    # msg = "你好"
 
-    wechat.send_msg(name, msg)
+    # wechat.send_msg(name, msg)
+    logs = wechat.get_dialogs(name, 50)
+    print(logs)
