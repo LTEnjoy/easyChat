@@ -103,9 +103,16 @@ class WeChat:
         send_button = auto.ButtonControl(Depth=15, Name=self.lc.send)
         click(send_button)
     
-    # 在指定群聊中@他人（若@所有人需具备@所有人权限）
-    def at(self, name, at_name):
-        self.get_contact(name)
+    def at(self, name, at_name, search_user: bool = True) -> None:
+        """
+        在指定群聊中@他人（若@所有人需具备@所有人权限）
+        Args:
+            name:  群聊名称
+            at_name: 要@的人的昵称
+            search_user: 是否需要搜索群聊
+        """
+        if search_user:
+            self.get_contact(name)
         
         # 如果at_name为空则代表@所有人
         if at_name == "":
@@ -118,23 +125,31 @@ class WeChat:
             auto.SendKeys("{enter}")
             self.press_enter()
     
-    # 搜索指定用户名的联系人发送信息
-    def send_msg(self, name, text):
-        self.get_contact(name)
+    def send_msg(self, name, text, search_user: bool = True) -> None:
+        """
+        搜索指定用户名的联系人发送信息
+        Args:
+            name: 指定用户名的名称，输入搜索框后出现的第一个人
+            text: 发送的文本信息
+            search_user: 是否需要搜索用户
+        """
+        if search_user:
+            self.get_contact(name)
         pyperclip.copy(text)
         auto.SendKeys("{Ctrl}v")
         self.press_enter()
     
     # 搜索指定用户名的联系人发送文件
-    def send_file(self, name: str, path: str):
+    def send_file(self, name: str, path: str, search_user: bool = True) -> None:
         """
         Args:
             name: 指定用户名的名称，输入搜索框后出现的第一个人
             path: 发送文件的本地地址
+            search_user: 是否需要搜索用户
         """
+        if search_user:
+            self.get_contact(name)
         
-        # 粘贴文件发送给用户
-        self.get_contact(name)
         # 将文件复制到剪切板
         setClipboardFiles([path])
         

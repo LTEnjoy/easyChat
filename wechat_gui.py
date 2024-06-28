@@ -285,30 +285,35 @@ class WechatGUI(QWidget):
                 # 获得用户编号列表
                 for user_i in range(self.contacts_view.count()):
                     rank, name = self.contacts_view.item(user_i).text().split(':', 1)
-    
-                    for msg_i in range(st-1, ed):
+                    # For the first message, we need to search user
+                    search_user = True
+                    
+                    for msg_i in range(st - 1, ed):
                         # 如果全局热键被按下，则停止发送
                         if self.hotkey_pressed is True:
                             QMessageBox.warning(self, "发送失败", f"热键已按下，已停止发送！")
                             return
                         
                         msg = self.msg.item(msg_i).text()
-    
+                        
                         _, type, to, content = msg.split(':', 3)
                         
                         # 判断是否需要发送给该用户
                         if to == "all" or str(rank) in to.split(','):
                             # 判断为文本内容
                             if type == "text":
-                                self.wechat.send_msg(name, content)
-        
+                                self.wechat.send_msg(name, content, search_user)
+                            
                             # 判断为文件内容
                             elif type == "file":
-                                self.wechat.send_file(name, content)
-        
+                                self.wechat.send_file(name, content, search_user)
+                            
                             # 判断为@他人
                             elif type == "at":
-                                self.wechat.at(name, content)
+                                self.wechat.at(name, content, search_user)
+                        
+                        # 搜索用户只在第一次发送时进行
+                        search_user = False
 
             except Exception:
                 QMessageBox.warning(self, "发送失败", f"发送失败！请检查内容格式或是否有遗漏步骤！")
