@@ -10,7 +10,8 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 如果有帮到您的话，麻烦顺手点个star~
 
-<details open><summary><b>更新日志</b></summary>
+## 更新日志
+<details open><summary><b></b></summary>
 
 #### 2024/06/28
 
