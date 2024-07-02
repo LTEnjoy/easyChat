@@ -43,6 +43,17 @@ class WechatGUI(QWidget):
                 
                 QMessageBox.information(self, "保存成功", "联系人列表保存成功！")
         
+        # 保存群聊列表
+        def save_groups():
+            path = QFileDialog.getSaveFileName(self, "保存群聊列表", "groups.txt", "文本文件(*.txt)")[0]
+            if not path == "":
+                contacts = self.wechat.find_all_groups()
+                with open(path, 'w', encoding='utf-8') as f:
+                    for contact in contacts:
+                        f.write(contact + '\n')
+                
+                QMessageBox.information(self, "保存成功", "群聊列表保存成功！")
+        
         # 读取联系人列表并加载
         def load_contacts():
             path = QFileDialog.getOpenFileName(self, "加载联系人列表", "", "文本文件(*.txt)")[0]
@@ -94,6 +105,9 @@ class WechatGUI(QWidget):
         save_btn = QPushButton("保存微信好友列表")
         save_btn.clicked.connect(save_contacts)
         
+        save_group_btn = QPushButton("保存微信群聊列表")
+        save_group_btn.clicked.connect(save_groups)
+        
         load_btn = QPushButton("加载用户txt文件")
         load_btn.clicked.connect(load_contacts)
         
@@ -105,6 +119,7 @@ class WechatGUI(QWidget):
 
         vbox.addWidget(info)
         vbox.addWidget(save_btn)
+        vbox.addWidget(save_group_btn)
         vbox.addWidget(load_btn)
         vbox.addWidget(add_btn)
         vbox.addWidget(del_btn)

@@ -6,6 +6,8 @@ import pyperclip
 import os
 import pyautogui
 
+
+from ctypes import *
 from PIL import ImageGrab
 from clipboard import setClipboardFiles
 from PyQt5.QtWidgets import QApplication
@@ -205,6 +207,49 @@ class WeChat:
         # 返回去重过后的联系人列表
         return list(set(contacts))
     
+    # 获取所有群聊
+    def find_all_groups(self):
+        self.open_wechat()
+        self.get_wechat()
+        
+        # 获取通讯录管理界面
+        click(auto.ButtonControl(Name=self.lc.contacts))
+        list_control = auto.ListControl(Name=self.lc.contact)
+        scroll_pattern = list_control.GetScrollPattern()
+        scroll_pattern.SetScrollPercent(-1, 0)
+        contacts_menu = list_control.ButtonControl(Name=self.lc.manage_contacts)
+        click(contacts_menu)
+
+        # 切换到通讯录管理界面
+        contacts_window = auto.GetForegroundControl()
+        
+        # 点击最近群聊
+        click(contacts_window.ButtonControl(Name="最近群聊"))
+        
+        # 获取群聊列表
+        list_control = contacts_window.ListControl()
+        scroll_pattern = list_control.GetScrollPattern()
+        
+        # 读取群聊
+        contacts = []
+        # 如果不存在滑轮则直接读取
+        if scroll_pattern is None:
+            for contact in contacts_window.ListControl().GetChildren():
+                # 获取群聊的名称 (将所有的顿号替换成了空格，这样才能在搜索框搜索到)
+                name = contact.TextControl().Name.replace("、", " ")
+                contacts.append(name)
+
+        else:
+            for percent in np.arange(0, 1.002, 0.01):
+                scroll_pattern.SetScrollPercent(-1, percent)
+                for contact in contacts_window.ListControl().GetChildren():
+                    # 获取群聊的名称 (将所有的顿号替换成了空格，这样才能在搜索框搜索到)
+                    name = contact.TextControl().Name.replace("、", " ")
+                    contacts.append(name)
+        
+        # 返回去重过后的群聊
+        return list(set(contacts))
+    
     # 检测微信是否收到新消息
     def check_new_msg(self):
         self.open_wechat()
@@ -393,13 +438,20 @@ class WeChat:
 
 
 if __name__ == '__main__':
-    # 测试
-    path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    # # 测试
+    path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    # path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
-
-    name = "杨志赫 港中文"
-    # msg = "你好"
-
-    # wechat.send_msg(name, msg)
-    logs = wechat.get_dialogs(name, 50)
-    print(logs)
+    
+    # wechat.get_contact(" ")
+    
+    # groups = wechat.find_all_groups()
+    # print(groups)
+    # print(len(groups))
+    #
+    # # wechat.send_msg(name, msg)
+    # logs = wechat.get_dialogs(name, 50)
+    # print(logs)
+    
+    
+    
