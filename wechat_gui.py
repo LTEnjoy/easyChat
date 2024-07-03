@@ -290,7 +290,10 @@ class WechatGUI(QWidget):
         def send_msg(gap=None, st=None, ed=None):
             # 在每次发送时进行初始化
             self.hotkey_pressed = False
-            
+
+            # 获取发送间隔
+            interval = send_interval.spin_box.value()
+
             try:
                 # 如果未定义范围的开头和结尾，则默认发送全部信息
                 if st is None:
@@ -299,6 +302,9 @@ class WechatGUI(QWidget):
                 
                 # 获得用户编号列表
                 for user_i in range(self.contacts_view.count()):
+                    # 等待间隔时间
+                    time.sleep(int(interval))
+
                     rank, name = self.contacts_view.item(user_i).text().split(':', 1)
                     # For the first message, we need to search user
                     search_user = True
@@ -349,8 +355,12 @@ class WechatGUI(QWidget):
         send_btn = QPushButton("发送")
         send_btn.clicked.connect(send_msg)
 
+        # 发送不同用户时的间隔
+        send_interval = MySpinBox("发送不同用户时的间隔（秒）")
+
         vbox_left.addWidget(info)
         vbox_left.addWidget(self.msg)
+        vbox_left.addWidget(send_interval)
         vbox_left.addWidget(send_btn)
 
         # 右边的选择内容界面

@@ -189,3 +189,31 @@ class FileDialog(QDialog):
     def get_input(self):
         """获取用户输入"""
         return [i.text() for i in self.inputs]
+
+
+class MySpinBox(QWidget):
+    def __init__(self, desc: str, **kwargs):
+        """
+        附带标签的SpinBox
+        Args:
+            desc: 默认的标签
+        """
+        super().__init__(**kwargs)
+
+        layout = QHBoxLayout()
+
+        # 初始化标签
+        self.desc = desc
+        self.label = QLabel(desc)
+        # self.label.setAlignment(Qt.AlignCenter)
+
+        # 初始化计数器
+        self.spin_box = QSpinBox()
+        # self.spin_box.valueChanged.connect(self.valuechange)
+
+        layout.addWidget(self.label)
+        layout.addWidget(self.spin_box)
+        self.setLayout(layout)
+
+    # def valuechange(self):
+    #     self.label.setText(f"{self.desc}: {self.spin_box.value()}")
