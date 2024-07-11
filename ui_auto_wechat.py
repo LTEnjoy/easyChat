@@ -443,7 +443,7 @@ if __name__ == '__main__':
     # path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
     
-    # wechat.get_contact(" ")
+    wechat.get_contact("文件")
     
     # groups = wechat.find_all_groups()
     # print(groups)
