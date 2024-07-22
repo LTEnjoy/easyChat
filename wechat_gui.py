@@ -1,6 +1,6 @@
 import sys
 import time
-
+import itertools
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -132,7 +132,7 @@ class WechatGUI(QWidget):
         # 按钮响应：增加时间
         def add_contact():
             inputs = [
-                "年 (例：2024)",
+                "注：在每一个时间输入框内都可以使用英文逗号“,“来一次性区分多个数值进行多次定时。\n年 (例：2024)",
                 "月 (1~12)",
                 "日 (1~31)",
                 "小时（0~23）",
@@ -161,8 +161,15 @@ class WechatGUI(QWidget):
                     return
                 
                 else:
-                    input = f"{year} {month} {day} {hour} {min} {st}-{ed}"
-                    self.time_view.addItem(input)
+                    year_list = year.split(',')
+                    month_list = month.split(',')
+                    day_list = day.split(',')
+                    hour_list = hour.split(',')
+                    min_list = min.split(',')
+                    
+                    for year, month, day, hour, min in itertools.product(year_list, month_list, day_list, hour_list, min_list):
+                        input = f"{year} {month} {day} {hour} {min} {st}-{ed}"
+                        self.time_view.addItem(input)
 
         # 按钮响应：删除时间
         def del_contact():
