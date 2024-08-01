@@ -317,7 +317,7 @@ class WeChat:
             elif list_item_control.Name == "查看更多消息":
                 value = 3
             # 或者是红包信息
-            elif "红包" in list_item_control.Name:
+            elif "红包" in list_item_control.Name or "Red packet" in list_item_control.Name:
                 value = 2
             # 或者是撤回消息
             elif "撤回了一条消息" in list_item_control.Name:
