@@ -96,7 +96,7 @@ class WeChat:
         pyperclip.copy(name)
         auto.SendKeys("{Ctrl}v")
         # 等待客户端搜索联系人
-        time.sleep(0.1)
+        time.sleep(0.3)
         search_box.SendKeys("{enter}")
     
     # 鼠标移动到发送按钮处点击发送消息
@@ -127,7 +127,7 @@ class WeChat:
             auto.SendKeys("{enter}")
             self.press_enter()
     
-    def send_msg(self, name, text, search_user: bool = True) -> None:
+    def send_msg(self, name, text, search_user: bool = True) -> bool:
         """
         搜索指定用户名的联系人发送信息
         Args:
@@ -139,7 +139,14 @@ class WeChat:
             self.get_contact(name)
         pyperclip.copy(text)
         auto.SendKeys("{Ctrl}v")
+        # 等待粘贴
+        time.sleep(0.3)
         self.press_enter()
+        # 发送消息后马上获取聊天记录，判断是否发送成功
+        if self.get_dialogs(name, 1,False)[0][2] == text:
+            return True
+        else:
+            return False
     
     # 搜索指定用户名的联系人发送文件
     def send_file(self, name: str, path: str, search_user: bool = True) -> None:
@@ -391,16 +398,20 @@ class WeChat:
                 break
             
     # 获取指定聊天窗口的聊天记录
-    def get_dialogs(self, name: str, n_msg: int) -> List:
+    def get_dialogs(self, name: str, n_msg: int,search_user: bool = True) -> List:
         """
         Args:
             name: 聊天窗口的姓名
             n_msg: 获取聊天记录的最大数量（从最后一条往上算）
+            search_user: 是否需要搜索用户
 
         Return:
             dialogs: 聊天记录列表，内部元素为三元组（信息类型，发送人，发送内容）
         """
-        list_control = self._get_chat_frame(name)
+        if search_user:
+            list_control = self._get_chat_frame(name)
+        else:
+            list_control = auto.ListControl(Name=self.lc.message)
         scroll_pattern = list_control.GetScrollPattern()
 
         # 如果聊天记录数量 < n_msg，则继续往上翻直到满足条件或无法上翻为止
