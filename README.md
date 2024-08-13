@@ -14,7 +14,7 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 <details open><summary><b></b></summary>
 
 #### 2024/08/13
-- 加入了判断消息是否发送成功的返回值，见https://github.com/LTEnjoy/easyChat/pull/67。感谢[@宇宇](https://github.com/xieyumc)。
+- 加入了判断消息是否发送成功的返回值，见https://github.com/LTEnjoy/easyChat/pull/67 。感谢[@宇宇](https://github.com/xieyumc)。
 
 #### 2024/07/22
 - 现在可以一次性实现多个定时时间的输入，降低了重复操作的繁琐性。
