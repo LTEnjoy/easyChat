@@ -138,9 +138,11 @@ class WeChat:
         if search_user:
             self.get_contact(name)
         pyperclip.copy(text)
-        auto.SendKeys("{Ctrl}v")
+
         # 等待粘贴
         time.sleep(0.3)
+        auto.SendKeys("{Ctrl}v")
+
         self.press_enter()
         # 发送消息后马上获取聊天记录，判断是否发送成功
         if self.get_dialogs(name, 1,False)[0][2] == text:
