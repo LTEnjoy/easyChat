@@ -95,6 +95,8 @@ class WeChat:
         
         pyperclip.copy(name)
         auto.SendKeys("{Ctrl}v")
+        
+        
         # 等待客户端搜索联系人
         time.sleep(0.3)
         search_box.SendKeys("{enter}")
@@ -461,8 +463,11 @@ if __name__ == '__main__':
     # groups = wechat.find_all_groups()
     # print(groups)
     # print(len(groups))
-    #
-    # # wechat.send_msg(name, msg)
+    
+    name = "文件"
+    msg = "你\n好"
+    # wechat.get_contact(name)
+    wechat.send_msg(name, msg)
     # logs = wechat.get_dialogs(name, 50)
     # print(logs)
     

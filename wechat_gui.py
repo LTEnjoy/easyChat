@@ -257,11 +257,13 @@ class WechatGUI(QWidget):
 
         # 增加一条文本信息
         def add_text():
-            inputs = ["请指定发送给哪些用户(1,2,3代表发送给前三位用户)，如需全部发送请忽略此项",
-                      "请输入发送的内容"]
+            inputs = [
+                "请输入发送的内容",
+                "请指定发送给哪些用户(1,2,3代表发送给前三位用户)，如需全部发送请忽略此项",
+            ]
             dialog = MultiInputDialog(inputs)
             if dialog.exec_() == QDialog.Accepted:
-                to, text = dialog.get_input()
+                text, to = dialog.get_input()
                 to = "all" if to == "" else to
                 if text != "":
                     # 消息的序号
@@ -322,7 +324,7 @@ class WechatGUI(QWidget):
                             QMessageBox.warning(self, "发送失败", f"热键已按下，已停止发送！")
                             return
                         
-                        msg = self.msg.item(msg_i).text()
+                        msg = self.msg.item(msg_i).text().replace("\\n", "\n")
                         
                         _, type, to, content = msg.split(':', 3)
                         
@@ -343,8 +345,8 @@ class WechatGUI(QWidget):
                         # 搜索用户只在第一次发送时进行
                         search_user = False
 
-            except Exception:
-                QMessageBox.warning(self, "发送失败", f"发送失败！请检查内容格式或是否有遗漏步骤！")
+            except Exception as e:
+                QMessageBox.warning(self, "发送失败", f"发送失败！请检查内容格式或是否有遗漏步骤！\n错误信息：{e}")
                 return
 
         # 左边的布局
