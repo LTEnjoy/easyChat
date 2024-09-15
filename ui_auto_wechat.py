@@ -328,11 +328,15 @@ class WeChat:
             elif list_item_control.Name == "查看更多消息":
                 value = 3
             # 或者是红包信息
-            elif "红包" in list_item_control.Name or "Red packet" in list_item_control.Name:
+            elif "红包" in list_item_control.Name or "red packet" in list_item_control.Name.lower():
                 value = 2
             # 或者是撤回消息
             elif "撤回了一条消息" in list_item_control.Name:
                 value = 4
+            # 或者是新消息通知
+            elif "以下为新消息" in list_item_control.Name:
+                value = 6
+
                 
         if value is None:
             raise ValueError("无法识别该控件类型")
@@ -433,7 +437,7 @@ class WeChat:
 
         cnt = 0
         dialogs = []
-        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: "System Notification"}
+        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: "System Notification", 6: '"以下是新消息"标志'}
         # 从下往上依次记录聊天内容。
         for list_item_control in list_control.GetChildren()[::-1]:
             v = self._detect_type(list_item_control)
