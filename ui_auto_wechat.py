@@ -455,6 +455,49 @@ class WeChat:
         dialogs = dialogs[::-1]
         return dialogs
 
+    def get_dialogs_by_time_blocks(self, name: str, n_time_blocks: int, search_user: bool = True) -> List[List]:
+            """
+            获取指定聊天窗口的聊天记录，并按时间信息分组。
+            Args:
+                name: 聊天窗口的姓名
+                n_time_blocks: 获取的时间分块数量
+                search_user: 是否需要搜索用户
+
+            Return:
+                groups: 聊天记录列表，每个元素为一个时间分块内的消息列表
+            """
+            n_msg = n_time_blocks * 5
+            prev_dialogs = None
+            groups = []
+            while True:
+                dialogs = self.get_dialogs(name, n_msg, search_user)
+                # 如果获取的dialogs和之前一样，说明没有更多消息了，退出循环
+                if prev_dialogs == dialogs:
+                    break
+                # 分组逻辑调整：处理顺序改为从最新消息到最早消息
+                groups = []
+                current_group = []
+
+                for msg in dialogs:
+                    if msg[0] == '时间信息':
+                        if current_group:
+                            groups.append(current_group)
+                        current_group = [msg]
+                    else:
+                        current_group.append(msg)
+                if current_group:
+                    groups.append(current_group)
+
+                # 获取n_time_blocks个时间块，取groups的最后n_time_blocks个元素
+                if len(groups) >= n_time_blocks:
+                    groups = groups[-n_time_blocks:]
+                    break
+                else:
+                    prev_dialogs = dialogs
+                    n_msg *= 2
+                    search_user = False  # 后续不需要再次搜索用户
+
+            return groups
 
 if __name__ == '__main__':
     # # 测试
