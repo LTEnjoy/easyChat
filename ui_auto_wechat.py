@@ -328,11 +328,15 @@ class WeChat:
             elif list_item_control.Name == "查看更多消息":
                 value = 3
             # 或者是红包信息
-            elif "红包" in list_item_control.Name or "Red packet" in list_item_control.Name:
+            elif "红包" in list_item_control.Name or "red packet" in list_item_control.Name.lower():
                 value = 2
             # 或者是撤回消息
             elif "撤回了一条消息" in list_item_control.Name:
                 value = 4
+            # 或者是新消息通知
+            elif "以下为新消息" in list_item_control.Name:
+                value = 6
+
                 
         if value is None:
             raise ValueError("无法识别该控件类型")
@@ -433,7 +437,7 @@ class WeChat:
 
         cnt = 0
         dialogs = []
-        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: "System Notification"}
+        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息', 5: "System Notification", 6: '"以下是新消息"标志'}
         # 从下往上依次记录聊天内容。
         for list_item_control in list_control.GetChildren()[::-1]:
             v = self._detect_type(list_item_control)
@@ -451,6 +455,57 @@ class WeChat:
         dialogs = dialogs[::-1]
         return dialogs
 
+    def get_dialogs_by_time_blocks(self, name: str, n_time_blocks: int, search_user: bool = True) -> List[List]:
+        """
+        获取指定聊天窗口的聊天记录，并按时间信息分组。
+        Args:
+            name: 聊天窗口的姓名
+            n_time_blocks: 获取的时间分块数量
+            search_user: 是否需要搜索用户
+        Return:
+            groups: 聊天记录列表，每个元素为一个时间分块内的消息列表
+        """
+        n_msg = n_time_blocks * 5
+        prev_dialogs = None
+        groups = []
+        while True:
+            dialogs = self.get_dialogs(name, n_msg, search_user)
+
+            # 如果获取的dialogs和之前一样，说明没有更多消息了，退出循环
+            if prev_dialogs == dialogs:
+                break
+            # 分组逻辑调整：处理顺序改为从最新消息到最早消息
+            groups = []
+            current_group = None
+
+            # 遍历所有消息，按照时间信息分组
+            for msg in dialogs:
+                # 遇见时间信息则新建一个分组
+                if msg[0] == '时间信息':
+                    # 将上一个分组加入到groups中
+                    if current_group is not None:
+                        groups.append(current_group)
+
+                    # 初始化新的分组
+                    current_group = [msg]
+
+                elif current_group is not None:
+                    current_group.append(msg)
+
+            # 将最后一个分组加入到groups中
+            if current_group is not None:
+                groups.append(current_group)
+
+            # 获取n_time_blocks个时间块，取groups的最后n_time_blocks个元素
+            if len(groups) >= n_time_blocks:
+                groups = groups[-n_time_blocks:]
+                break
+            else:
+                prev_dialogs = dialogs
+                n_msg *= 2
+                search_user = False  # 后续不需要再次搜索用户
+
+        return groups
 
 if __name__ == '__main__':
     # # 测试
