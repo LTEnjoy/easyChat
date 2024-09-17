@@ -14,7 +14,7 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 <details open><summary><b></b></summary>
 
 #### 2024/09/17
-- 现在支持代码层面根据时间信息分块获取聊天记录,见函数 get_dialogs_by_time_blocks()。感谢[@宇宇](https://github.com/xieyumc)。
+- 现在支持代码层面根据时间信息分块获取聊天记录,见https://github.com/LTEnjoy/easyChat/pull/70。感谢[@宇宇](https://github.com/xieyumc)。
 
 #### 2024/08/16
 - 现在支持一条信息换行发送，可以在输入内容时使用“\n”进行换行，例如：“你好\n我是xx”。
