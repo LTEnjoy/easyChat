@@ -507,6 +507,7 @@ class WeChat:
 
         return groups
 
+
 if __name__ == '__main__':
     # # 测试
     path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
