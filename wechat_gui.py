@@ -327,7 +327,6 @@ class WechatGUI(QWidget):
                         msg = self.msg.item(msg_i).text().replace("\\n", "\n")
                         
                         _, type, to, content = msg.split(':', 3)
-                        
                         # 判断是否需要发送给该用户
                         if to == "all" or str(rank) in to.split(','):
                             # 判断为文本内容
@@ -342,8 +341,8 @@ class WechatGUI(QWidget):
                             elif type == "at":
                                 self.wechat.at(name, content, search_user)
                         
-                        # 搜索用户只在第一次发送时进行
-                        search_user = False
+                            # 搜索用户只在第一次发送时进行
+                            search_user = False
 
             except Exception as e:
                 QMessageBox.warning(self, "发送失败", f"发送失败！请检查内容格式或是否有遗漏步骤！\n错误信息：{e}")
