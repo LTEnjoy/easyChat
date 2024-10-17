@@ -147,9 +147,13 @@ class WeChat:
 
         self.press_enter()
         # 发送消息后马上获取聊天记录，判断是否发送成功
-        if self.get_dialogs(name, 1,False)[0][2] == text:
-            return True
-        else:
+        try:
+            if self.get_dialogs(name, 1, False)[0][2] == text:
+                return True
+            else:
+                return False
+            
+        except Exception:
             return False
     
     # 搜索指定用户名的联系人发送文件
@@ -520,7 +524,7 @@ if __name__ == '__main__':
     # print(groups)
     # print(len(groups))
     
-    name = "文件"
+    name = "禧彬"
     msg = "你\n好"
     # wechat.get_contact(name)
     wechat.send_msg(name, msg)

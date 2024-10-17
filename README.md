@@ -2,7 +2,7 @@
 
 PC端微信助手（非web微信版）：定时发送信息；群发信息；自动回复等。直接下载文件目录内的exe即可使用。
 
-最新编辑日期：2024/09/17
+最新编辑日期：2024/10/17
 
 有疑问推荐在Issues上提出以供他人参考。
 
@@ -12,6 +12,9 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 ## 更新日志
 <details open><summary><b></b></summary>
+
+#### 2024/10/17
+- 修复了当其中一个联系人发送失败时影响后续所有发送的bug， 见 https://github.com/LTEnjoy/easyChat/issues/73 。
 
 #### 2024/09/17
 - 现在支持代码层面根据时间信息分块获取聊天记录,见https://github.com/LTEnjoy/easyChat/pull/70 。感谢[@宇宇](https://github.com/xieyumc)。
