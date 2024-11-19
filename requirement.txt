@@ -21,3 +21,4 @@ shiboken2==5.15.2.1
 uiautomation==2.0.17
 pyautogui
 keyboard
+pandas

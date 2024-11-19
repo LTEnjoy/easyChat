@@ -7,6 +7,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from ui_auto_wechat import WeChat
 from module import *
+from wechat_locale import WeChatLocale
 
 
 class WechatGUI(QWidget):
@@ -34,12 +35,13 @@ class WechatGUI(QWidget):
     def init_choose_contacts(self):
         # 读取联系人列表并保存
         def save_contacts():
-            path = QFileDialog.getSaveFileName(self, "保存联系人列表", "contacts.txt", "文本文件(*.txt)")[0]
+            path = QFileDialog.getSaveFileName(self, "保存联系人列表", "contacts.csv", "表格文件(*.csv)")[0]
             if not path == "":
                 contacts = self.wechat.find_all_contacts()
-                with open(path, 'w', encoding='utf-8') as f:
-                    for contact in contacts:
-                        f.write(contact + '\n')
+                contacts.to_csv(path, index=False, encoding='utf_8_sig')
+                # with open(path, 'w', encoding='utf-8') as f:
+                #     for contact in contacts:
+                #         f.write(contact + '\n')
                 
                 QMessageBox.information(self, "保存成功", "联系人列表保存成功！")
         
@@ -399,6 +401,44 @@ class WechatGUI(QWidget):
 
         return hbox
 
+    # 提供选择微信语言版本的按钮
+    def init_language_choose(self):
+        def switch_language():
+            if lang_zh_CN_btn.isChecked():
+                self.wechat.lc = WeChatLocale("zh-CN")
+            elif lang_zh_TW_btn.isChecked():
+                self.wechat.lc = WeChatLocale("zh-TW")
+            elif lang_en_btn.isChecked():
+                self.wechat.lc = WeChatLocale("en-US")
+
+        # 提示信息
+        info = QLabel("请选择你的微信系统语言")
+
+        # 选择按钮
+        lang_zh_CN_btn = QRadioButton("简体中文")
+        lang_zh_TW_btn = QRadioButton("繁体中文")
+        lang_en_btn = QRadioButton("English")
+
+        # 默认选择简体中文
+        lang_zh_CN_btn.setChecked(True)
+
+        # 选择按钮的响应事件
+        lang_zh_CN_btn.clicked.connect(switch_language)
+        lang_zh_TW_btn.clicked.connect(switch_language)
+        lang_en_btn.clicked.connect(switch_language)
+
+        # 整体布局
+        hbox = QHBoxLayout()
+        hbox.addWidget(lang_zh_CN_btn)
+        hbox.addWidget(lang_zh_TW_btn)
+        hbox.addWidget(lang_en_btn)
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(info)
+        vbox.addLayout(hbox)
+
+        return vbox
+
     def initUI(self):
         # 垂直布局
         vbox = QVBoxLayout()
@@ -412,6 +452,9 @@ class WechatGUI(QWidget):
         self.path_btn = QPushButton("选择微信打开路径", self)
         self.path_btn.resize(self.path_btn.sizeHint())
         self.path_btn.clicked.connect(self.choose_path)
+
+        # 选择微信语言界面
+        lang = self.init_language_choose()
 
         # self.open_wechat_btn = QPushButton("打开微信", self)
         # self.open_wechat_btn.clicked.connect(self.open_wechat)
@@ -427,6 +470,7 @@ class WechatGUI(QWidget):
 
         vbox.addWidget(self.path_label)
         vbox.addWidget(self.path_btn)
+        vbox.addLayout(lang)
         vbox.addLayout(contacts)
         vbox.addStretch(5)
         vbox.addLayout(msg_widget)
