@@ -209,6 +209,11 @@ class WeChat:
             for percent in np.arange(0, 1.002, 0.001):
                 scroll_pattern.SetScrollPercent(-1, percent)
                 for contact in contacts_window.ListControl().GetChildren():
+                    print(contact)
+                    print(contact.GetChildren())
+                    label = contact.ButtonControl(Depth=5)
+                    print(label)
+                    raise
                     # 获取用户的昵称以及备注
                     name = contact.TextControl().Name
                     note = contact.ButtonControl(foundIndex=2).Name
@@ -518,16 +523,17 @@ if __name__ == '__main__':
     # path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
     
-    wechat.get_contact("文件")
+    wechat.check_new_msg()
+    # wechat.find_all_contacts()
     
     # groups = wechat.find_all_groups()
     # print(groups)
     # print(len(groups))
     
-    name = "禧彬"
-    msg = "你\n好"
+    # name = "禧彬"
+    # msg = "你\n好"
     # wechat.get_contact(name)
-    wechat.send_msg(name, msg)
+    # wechat.send_msg(name, msg)
     # logs = wechat.get_dialogs(name, 50)
     # print(logs)
     
