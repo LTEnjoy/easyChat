@@ -41,6 +41,7 @@ class WeChatLocale:
     def getSupportedLocales():
         return list(WeChatLocale.MAPPING.values())[0].keys()
 
+
 if __name__ == "__main__":
     print(WeChatLocale.getSupportedLocales())
 

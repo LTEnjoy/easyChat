@@ -2,6 +2,7 @@ import time
 import uiautomation as auto
 import subprocess
 import numpy as np
+import pandas as pd
 import pyperclip
 import os
 import pyautogui
@@ -66,7 +67,8 @@ class WeChat:
         
         # 自动回复的内容
         self.auto_reply_msg = "[自动回复]您好，我现在正在忙，稍后会主动联系您，感谢理解。"
-        
+
+        assert locale in WeChatLocale.getSupportedLocales()
         self.lc = WeChatLocale(locale)
         
     # 打开微信客户端
@@ -174,7 +176,7 @@ class WeChat:
         self.press_enter()
     
     # 获取所有通讯录中所有联系人
-    def find_all_contacts(self):
+    def find_all_contacts(self) -> pd.DataFrame:
         self.open_wechat()
         self.get_wechat()
         
@@ -192,40 +194,32 @@ class WeChat:
         scroll_pattern = list_control.GetScrollPattern()
         
         # 读取用户
-        contacts = []
+        contacts = pd.DataFrame(columns=["昵称", "备注", "标签"])
         # 如果不存在滑轮则直接读取
         if scroll_pattern is None:
             for contact in contacts_window.ListControl().GetChildren():
-                # 获取用户的昵称以及备注
+                # 获取用户的昵称备注以及标签
                 name = contact.TextControl().Name
                 note = contact.ButtonControl(foundIndex=2).Name
+                label = contact.ButtonControl(foundIndex=3).Name
 
-                # 有备注的用备注，没有备注的用昵称
-                if note == "":
-                    contacts.append(name)
-                else:
-                    contacts.append(note)
+                contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
         else:
-            for percent in np.arange(0, 1.002, 0.001):
+            for percent in np.arange(0, 1.001, 0.001):
                 scroll_pattern.SetScrollPercent(-1, percent)
                 for contact in contacts_window.ListControl().GetChildren():
-                    print(contact)
-                    print(contact.GetChildren())
-                    label = contact.ButtonControl(Depth=5)
-                    print(label)
-                    raise
-                    # 获取用户的昵称以及备注
+                    # 获取用户的昵称备注以及标签
                     name = contact.TextControl().Name
                     note = contact.ButtonControl(foundIndex=2).Name
+                    label = contact.ButtonControl(foundIndex=3).Name
 
-                    # 有备注的用备注，没有备注的用昵称
-                    if note == "":
-                        contacts.append(name)
-                    else:
-                        contacts.append(note)
-        
-        # 返回去重过后的联系人列表
-        return list(set(contacts))
+                    contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
+
+                break
+
+        # 对用户根据昵称进行去重
+        contacts = contacts.drop_duplicates(subset=["昵称"])
+        return contacts
     
     # 获取所有群聊
     def find_all_groups(self):
@@ -519,18 +513,18 @@ class WeChat:
 
 if __name__ == '__main__':
     # # 测试
-    path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    # path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    # path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
     
-    wechat.check_new_msg()
-    # wechat.find_all_contacts()
+    # wechat.check_new_msg()
+    wechat.find_all_contacts()
     
     # groups = wechat.find_all_groups()
     # print(groups)
     # print(len(groups))
     
-    # name = "禧彬"
+    # name = "文件"
     # msg = "你\n好"
     # wechat.get_contact(name)
     # wechat.send_msg(name, msg)
