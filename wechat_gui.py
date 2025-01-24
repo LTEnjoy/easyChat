@@ -479,9 +479,15 @@ class WechatGUI(QWidget):
         vbox.addStretch(1)
 
         # qle.textChanged[str].connect(self.onChanged)
+        
+        #获取显示器分辨率
+        desktop = QApplication.desktop()
+        screenRect = desktop.screenGeometry()
+        height = screenRect.height()
+        width = screenRect.width()
 
         self.setLayout(vbox)
-        self.setFixedSize(500, 700)
+        self.setFixedSize(width*0.2, height*0.5)
         self.setWindowTitle('EasyChat微信助手(作者：LTEnjoy)')
         self.show()
 
