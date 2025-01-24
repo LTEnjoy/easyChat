@@ -215,8 +215,6 @@ class WeChat:
 
                     contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
 
-                break
-
         # 对用户根据昵称进行去重
         contacts = contacts.drop_duplicates(subset=["昵称"])
         return contacts
@@ -518,8 +516,9 @@ if __name__ == '__main__':
     wechat = WeChat(path, locale="zh-CN")
     
     # wechat.check_new_msg()
-    wechat.find_all_contacts()
-    
+    res = wechat.find_all_contacts()
+    print(res)
+
     # groups = wechat.find_all_groups()
     # print(groups)
     # print(len(groups))
