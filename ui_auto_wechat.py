@@ -511,8 +511,8 @@ class WeChat:
 
 if __name__ == '__main__':
     # # 测试
-    # path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    # path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
     
     # wechat.check_new_msg()
