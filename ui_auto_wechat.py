@@ -183,8 +183,8 @@ class WeChat:
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
         list_control = auto.ListControl(Name=self.lc.contact)
-        scroll_pattern = list_control.GetScrollPattern()
-        scroll_pattern.SetScrollPercent(-1, 0)
+        # scroll_pattern = list_control.GetScrollPattern()
+        # scroll_pattern.SetScrollPercent(-1, 0)
         contacts_menu = list_control.ButtonControl(Name=self.lc.manage_contacts)
         click(contacts_menu)
         
