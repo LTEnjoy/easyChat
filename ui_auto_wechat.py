@@ -96,7 +96,8 @@ class WeChat:
         click(search_box)
         
         pyperclip.copy(name)
-        auto.SendKeys("{Ctrl}v")
+        auto.SendKeys(name)
+        # auto.SendKeys("{Ctrl}v")
         
         
         # 等待客户端搜索联系人
@@ -143,9 +144,8 @@ class WeChat:
             self.get_contact(name)
         pyperclip.copy(text)
 
-        # 等待粘贴
-        time.sleep(0.3)
-        auto.SendKeys("{Ctrl}v")
+        self.step_paste_execute()
+        # auto.SendKeys("{Ctrl}v")
 
         self.press_enter()
         # 发送消息后马上获取聊天记录，判断是否发送成功
@@ -172,7 +172,8 @@ class WeChat:
         # 将文件复制到剪切板
         setClipboardFiles([path])
         
-        auto.SendKeys("{Ctrl}v")
+        self.step_paste_execute()
+        # auto.SendKeys("{Ctrl}v")
         self.press_enter()
     
     # 获取所有通讯录中所有联系人
@@ -306,7 +307,8 @@ class WeChat:
     def _auto_reply(self, element, text):
         click(element)
         pyperclip.copy(text)
-        auto.SendKeys("{Ctrl}v")
+        self.step_paste_execute()
+        # auto.SendKeys("{Ctrl}v")
         self.press_enter()
     
     # 识别聊天内容的类型
@@ -508,27 +510,46 @@ class WeChat:
 
         return groups
 
+    def step_paste_execute(self):
+        # 获取发送按钮
+        send_button = auto.ButtonControl(Depth=15, Name=self.lc.send)
+        
+        # 获取按钮位置
+        x, y = send_button.GetPosition()
+        
+        # 计算偏移位置（左上各偏移50像素）
+        offset_x = x - 50
+        offset_y = y - 50
+        
+        # 等待粘贴
+        time.sleep(1.0)
+        # 右键偏移后的位置
+        auto.RightClick(offset_x, offset_y)
+        time.sleep(0.5)
+        # auto.Click(offset_x+5, offset_y+5) # 不知道为什么找不到粘贴按钮，采用hack实现
+        paste_button = auto.TextControl(Depth=7, Name="粘贴")
+        click(paste_button)
+        # time.sleep(0.3)
+        # click(send_button)
 
 if __name__ == '__main__':
     # # 测试
-    path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    path = r"C:\Program Files\Tencent\WeChat\WeChat.exe"
     # path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
-    
+
     # wechat.check_new_msg()
-    res = wechat.find_all_contacts()
-    print(res)
+    # res = wechat.find_all_contacts()
+    # print(res)
 
     # groups = wechat.find_all_groups()
     # print(groups)
     # print(len(groups))
     
-    # name = "文件"
-    # msg = "你\n好"
+    name = "文件传输助手"
     # wechat.get_contact(name)
-    # wechat.send_msg(name, msg)
+    msg = "你\n好"
+    wechat.send_msg(name, msg)
+    wechat.send_msg(name, "test")
     # logs = wechat.get_dialogs(name, 50)
     # print(logs)
-    
-    
-    

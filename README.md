@@ -15,7 +15,7 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 - 暂无。
 
 ## 更新日志
-<details open><summary><b></b></summary>
+<details><summary><b>点击查看日志</b></summary>
 
 #### 2025/02/14
 - 修复了获取微信全部好友功能的bug。

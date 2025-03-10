@@ -347,7 +347,9 @@ class WechatGUI(QWidget):
                             search_user = False
 
             except Exception as e:
-                QMessageBox.warning(self, "发送失败", f"发送失败！请检查内容格式或是否有遗漏步骤！\n错误信息：{e}")
+                import traceback
+                error_msg = f"发送失败！请检查内容格式或是否有遗漏步骤！\n错误信息：{e}\n\n堆栈跟踪信息：\n{traceback.format_exc()}"
+                QMessageBox.warning(self, "发送失败", error_msg)
                 return
 
         # 左边的布局
@@ -487,7 +489,7 @@ class WechatGUI(QWidget):
         width = screenRect.width()
 
         self.setLayout(vbox)
-        self.setFixedSize(width*0.2, height*0.6)
+        self.setFixedSize(int(width*0.2), int(height*0.6))
         self.setWindowTitle('EasyChat微信助手(作者：LTEnjoy)')
         self.show()
 
