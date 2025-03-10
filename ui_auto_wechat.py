@@ -92,12 +92,13 @@ class WeChat:
         self.open_wechat()
         self.get_wechat()
         
+        pyperclip.copy(name)
+        time.sleep(0.3)
         search_box = auto.EditControl(Depth=8, Name=self.lc.search)
         click(search_box)
         
-        pyperclip.copy(name)
-        auto.SendKeys(name)
-        # auto.SendKeys("{Ctrl}v")
+        time.sleep(0.3)
+        auto.SendKeys("{Ctrl}v")
         
         
         # 等待客户端搜索联系人
@@ -529,8 +530,6 @@ class WeChat:
         # auto.Click(offset_x+5, offset_y+5) # 不知道为什么找不到粘贴按钮，采用hack实现
         paste_button = auto.TextControl(Depth=7, Name="粘贴")
         click(paste_button)
-        # time.sleep(0.3)
-        # click(send_button)
 
 if __name__ == '__main__':
     # # 测试
@@ -547,9 +546,9 @@ if __name__ == '__main__':
     # print(len(groups))
     
     name = "文件传输助手"
-    # wechat.get_contact(name)
-    msg = "你\n好"
-    wechat.send_msg(name, msg)
-    wechat.send_msg(name, "test")
+    wechat.get_contact(name)
+    # msg = "你\n好"
+    # wechat.send_msg(name, msg)
+    # wechat.send_msg(name, "test")
     # logs = wechat.get_dialogs(name, 50)
     # print(logs)
