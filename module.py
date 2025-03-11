@@ -3,9 +3,9 @@ import time
 import threading
 import keyboard
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt6.QtWidgets import *
+from PyQt6.QtCore import *
+from PyQt6.QtGui import *
 from ui_auto_wechat import WeChat
 from functools import partial
 
@@ -58,7 +58,7 @@ class MyListWidget(QListWidget):
     """支持双击可编辑的QListWidget"""
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)  # 设置选择多个
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)  # 设置选择多个
 
         # 双击可编辑
         self.edited_item = self.currentItem()
@@ -69,7 +69,7 @@ class MyListWidget(QListWidget):
     def keyPressEvent(self, e: QKeyEvent) -> None:
         """回车事件，关闭edit"""
         super().keyPressEvent(e)
-        if e.key() == Qt.Key_Return:
+        if e.key() == Qt.Key.Key_Return:
             if self.close_flag:
                 self.close_edit()
             self.close_flag = True
@@ -205,7 +205,7 @@ class MySpinBox(QWidget):
         # 初始化标签
         self.desc = desc
         self.label = QLabel(desc)
-        # self.label.setAlignment(Qt.AlignCenter)
+        # self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # 初始化计数器
         self.spin_box = QSpinBox()

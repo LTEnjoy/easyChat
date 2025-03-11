@@ -11,8 +11,8 @@ import pyautogui
 from ctypes import *
 from PIL import ImageGrab
 from clipboard import setClipboardFiles
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QMimeData, QUrl
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QMimeData, QUrl
 from typing import List
 
 from wechat_locale import WeChatLocale
