@@ -1,6 +1,9 @@
 import sys
 import time
 import itertools
+import configparser
+import os
+import json
 
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
@@ -53,14 +56,27 @@ class WechatGUI(QWidget):
                         f.write(contact + '\n')
                 QMessageBox.information(self, "保存成功", "群聊列表保存成功！")
         
-        # 读取联系人列表并加载
+        # 从 config.json 中加载联系人列表
         def load_contacts():
-            path = QFileDialog.getOpenFileName(self, "加载联系人列表", "", "文本文件(*.txt)")[0]
-            if not path == "":
-                with open(path, 'r', encoding='utf-8') as f:
-                    for line in f.readlines():
-                        self.contacts_view.addItem(f"{self.contacts_view.count()+1}:{line.strip()}")
-                QMessageBox.information(self, "加载成功", "联系人列表加载成功！")
+            if not os.path.exists('config.json'):
+                QMessageBox.warning(self, "读取失败", "config.json文件不存在！")
+                return
+            
+            try:
+                with open('config.json', 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                
+                # 读取联系人列表
+                if 'Contacts' in config:
+                    contacts = config['Contacts']
+                    for contact in contacts:
+                        if contact:  # 确保不添加空字符串
+                            self.contacts_view.addItem(contact)
+                    QMessageBox.information(self, "加载成功", "已成功从config.json文件读取联系人列表！")
+                else:
+                    QMessageBox.warning(self, "读取失败", "config.json中不包含联系人列表！")
+            except Exception as e:
+                QMessageBox.warning(self, "读取失败", f"读取配置文件时出错：{str(e)}")
         
         # 增加用户列表信息
         def add_contact():
@@ -136,7 +152,7 @@ class WechatGUI(QWidget):
         contact_actions_group = create_group_box("联系人操作")
         contact_actions_layout = QVBoxLayout()
         
-        load_btn = create_secondary_button("加载用户文件")
+        load_btn = create_secondary_button("从配置加载")
         load_btn.clicked.connect(load_contacts)
         
         add_btn = create_secondary_button("添加用户")
@@ -327,24 +343,37 @@ class WechatGUI(QWidget):
 
     # 发送消息内容界面的初始化
     def init_send_msg(self):
-        # 从txt中加载消息内容
+        # 从 config.json 中加载消息内容
         def load_text():
-            path = QFileDialog.getOpenFileName(self, "加载内容文本", "", "文本文件(*.txt)")[0]
-            if not path == "":
-                with open(path, 'r', encoding='utf-8') as f:
-                    for line in f.readlines():
-                        self.msg.addItem(f"{self.msg.count()+1}:text:all:{line.strip()}")
-                QMessageBox.information(self, "加载成功", "内容文本加载成功！")
+            if not os.path.exists('config.json'):
+                QMessageBox.warning(self, "读取失败", "config.json文件不存在！")
+                return
+            
+            try:
+                with open('config.json', 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                
+                # 读取消息列表
+                if 'Messages' in config:
+                    contacts = config['Messages']
+                    for contact in contacts:
+                        if contact:  # 确保不添加空字符串
+                            self.msg.addItem(contact)
+                    QMessageBox.information(self, "加载成功", "已成功从config.json文件读取消息列表！")
+                else:
+                    QMessageBox.warning(self, "读取失败", "config.json中不包含消息列表！")
+            except Exception as e:
+                QMessageBox.warning(self, "读取失败", f"读取配置文件时出错：{str(e)}")
 
         # 增加一条文本信息
         def add_text():
             inputs = [
-                "请输入发送的内容",
                 "请指定发送给哪些用户(1,2,3代表发送给前三位用户)，如需全部发送请忽略此项",
+                "请输入发送的内容",
             ]
             dialog = MultiInputDialog(inputs)
             if dialog.exec() == QDialog.DialogCode.Accepted:
-                text, to = dialog.get_input()
+                to, text = dialog.get_input()
                 to = "all" if to == "" else to
                 if text != "":
                     # 消息的序号
@@ -481,7 +510,7 @@ class WechatGUI(QWidget):
         content_actions_group = create_group_box("内容操作")
         content_actions_layout = QVBoxLayout()
         
-        load_btn = create_secondary_button("加载内容文件")
+        load_btn = create_secondary_button("从配置加载")
         load_btn.clicked.connect(load_text)
         
         text_btn = create_secondary_button("添加文本内容")
@@ -637,28 +666,35 @@ class WechatGUI(QWidget):
         extra_settings_group = create_group_box("其他设置")
         extra_settings_layout = QVBoxLayout()
         
-        # 添加一个防止自动下线的toggle按钮
-        prevent_offline_btn = QPushButton("防止自动下线")
-        prevent_offline_btn.setCheckable(True)
-        prevent_offline_btn.setChecked(False)
-        prevent_offline_btn.clicked.connect(self.toggle_prevent_offline)
-        prevent_offline_btn.setStyleSheet("""
-            QPushButton {
-                padding: 8px;
-                border-radius: 4px;
-                background-color: #e0e0e0;
-                color: #212121;
-                text-align: left;
-                padding-left: 15px;
-            }
-            QPushButton:checked {
-                background-color: #2979ff;
-                color: white;
-                font-weight: bold;
-            }
-        """)
-        extra_settings_layout.addWidget(prevent_offline_btn)
-        self.prevent_offline_btn = prevent_offline_btn
+        # 创建水平布局用于放置复选框
+        checkbox_layout = QHBoxLayout()
+        
+        # 防止自动下线复选框
+        prevent_btn = QCheckBox("防止自动下线")
+        prevent_btn.setChecked(False)
+        prevent_btn.clicked.connect(self.toggle_prevent_offline)
+        checkbox_layout.addWidget(prevent_btn)
+        checkbox_layout.addStretch()
+        self.prevent_offline_btn = prevent_btn
+        
+        # 添加复选框布局
+        extra_settings_layout.addLayout(checkbox_layout)
+        
+        # 配置文件按钮区域
+        config_buttons_layout = QHBoxLayout()
+        
+        # 保存配置按钮
+        save_config_btn = create_primary_button("写入配置")
+        save_config_btn.clicked.connect(self.save_config)
+        config_buttons_layout.addWidget(save_config_btn)
+        
+        # 读取配置按钮
+        load_config_btn = create_secondary_button("读取配置")
+        load_config_btn.clicked.connect(self.load_config)
+        config_buttons_layout.addWidget(load_config_btn)
+        
+        # 添加按钮布局
+        extra_settings_layout.addLayout(config_buttons_layout)
         
         extra_settings_group.setLayout(extra_settings_layout)
         main_layout.addWidget(extra_settings_group)
@@ -726,7 +762,6 @@ class WechatGUI(QWidget):
         
         # 设置窗口属性
         self.setLayout(main_layout)
-        # self.setMinimumSize(int(width*0.25), int(height*0.7))
         self.setWindowTitle('EasyChat微信助手 v2.0')
         self.show()
 
@@ -740,6 +775,96 @@ class WechatGUI(QWidget):
     # 打开微信
     def open_wechat(self):
         self.wechat.open_wechat()
+
+    # 保存配置到文件
+    def save_config(self):
+        config = {}
+        
+        # 保存微信路径
+        config['WeChat'] = {
+            'path': self.wechat.path if hasattr(self.wechat, 'path') else ''
+        }
+        
+        # 保存联系人列表
+        contacts = []
+        for i in range(self.contacts_view.count()):
+            contacts.append(self.contacts_view.item(i).text())
+        config['Contacts'] = contacts
+        
+        # 保存消息列表
+        messages = []
+        for i in range(self.msg.count()):
+            messages.append(self.msg.item(i).text())
+        config['Messages'] = messages
+        
+        # 保存定时任务列表
+        schedules = []
+        for i in range(self.time_view.count()):
+            schedules.append(self.time_view.item(i).text())
+        config['Schedules'] = schedules
+        
+        # 保存防止自动下线设置
+        config['Settings'] = {
+            'prevent_offline': self.clock.prevent_offline
+        }
+        
+        # 写入配置文件
+        with open('config.json', 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+        
+        QMessageBox.information(self, "保存成功", "配置已成功保存到 config.json 文件！")
+    
+    # 从文件读取配置
+    def load_config(self):
+        if not os.path.exists('config.json'):
+            QMessageBox.warning(self, "读取失败", "config.json文件不存在！")
+            return
+        
+        try:
+            with open('config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            # 读取微信路径
+            if 'WeChat' in config and 'path' in config['WeChat']:
+                path = config['WeChat']['path']
+                if path:
+                    self.path_label.setText(path)
+                    self.wechat.path = path
+            
+            # 读取联系人列表
+            if 'Contacts' in config:
+                contacts = config['Contacts']
+                self.contacts_view.clear()
+                for contact in contacts:
+                    if contact:  # 确保不添加空字符串
+                        self.contacts_view.addItem(contact)
+            
+            # 读取消息列表
+            if 'Messages' in config:
+                messages = config['Messages']
+                self.msg.clear()
+                for message in messages:
+                    if message:  # 确保不添加空字符串
+                        self.msg.addItem(message)
+            
+            # 读取定时任务列表
+            if 'Schedules' in config:
+                schedules = config['Schedules']
+                self.time_view.clear()
+                for schedule in schedules:
+                    if schedule:  # 确保不添加空字符串
+                        self.time_view.addItem(schedule)
+            
+            # 读取防止自动下线设置
+            if 'Settings' in config and 'prevent_offline' in config['Settings']:
+                prevent_offline = config['Settings']['prevent_offline']
+                self.clock.prevent_offline = prevent_offline
+                self.prevent_offline_btn.setChecked(prevent_offline)
+            
+            QMessageBox.information(self, "读取成功", "已成功从config.json文件读取配置！")
+        except Exception as e:
+            QMessageBox.warning(self, "读取失败", f"读取配置文件时出错：{str(e)}")
+            return
 
 
 if __name__ == '__main__':

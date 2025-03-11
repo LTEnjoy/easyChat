@@ -18,6 +18,7 @@ venv.bak/
 # 构建
 build/
 dist/
+config.json
 
 # IDEA
 .idea/
