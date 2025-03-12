@@ -18,6 +18,8 @@ venv.bak/
 # 构建
 build/
 dist/
+dist_nuitka/
+pack_nuitka.py
 config.json
 
 # IDEA
