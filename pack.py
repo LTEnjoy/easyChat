@@ -15,7 +15,7 @@ def main():
             print("打包已取消")
             return
     
-    cmd = f"pyinstaller.exe -Fw wechat_gui.py"
+    cmd = f"pyinstaller wechat_gui.spec"
 
     result = subprocess.call(cmd, shell=True)
     

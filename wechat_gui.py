@@ -421,14 +421,15 @@ class WechatGUI(QWidget):
                 
                 # 获得用户编号列表
                 for user_i in range(self.contacts_view.count()):
-                    # 等待间隔时间
-                    time.sleep(int(interval))
 
                     rank, name = self.contacts_view.item(user_i).text().split(':', 1)
                     # For the first message, we need to search user
                     search_user = True
                     
                     for msg_i in range(st - 1, ed):
+                        # 等待间隔时间
+                        time.sleep(int(interval))
+
                         # 如果全局热键被按下，则停止发送
                         if self.hotkey_pressed is True:
                             QMessageBox.warning(self, "发送失败", f"热键已按下，已停止发送！")
@@ -491,7 +492,7 @@ class WechatGUI(QWidget):
         
         # 发送间隔设置
         send_interval = MySpinBox("发送间隔（秒）")
-        send_interval.spin_box.setValue(1)  # 默认值设为1秒
+        send_interval.spin_box.setValue(3)  # 默认值设为1秒
         control_layout.addWidget(send_interval, 2)
         
         # 发送按钮

@@ -17,21 +17,14 @@ pyinstaller==6.12.0
 pyinstaller-hooks-contrib==2025.1
 PyMsgBox==1.0.9
 pyperclip==1.9.0
-# PyQt5==5.15.11
-# PyQt5-Qt5==5.15.2
-# PyQt5-sip==12.17.0
 PyQt6==6.8.1
 PyQt6-Qt6==6.8.2
 PyQt6-sip==13.10.0
 PyRect==0.2.0
 pyscreenshot==3.1
 PyScreeze==1.0.1
-# PySide2==5.15.2.1
-PySide6==6.8.2.1
 pytweening==1.2.0
 PyWavelets==1.8.0
 pywin32==309
-# pywin32-ctypes==0.2.3
-# shiboken2==5.15.2.1
 uiautomation==2.0.20
 pandas
