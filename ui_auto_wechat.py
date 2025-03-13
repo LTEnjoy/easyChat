@@ -3,8 +3,8 @@ import uiautomation as auto
 import subprocess
 # import numpy as np
 # import pandas as pd
-from custom_libs import array_utils  # 自定义库替代 numpy
-from custom_libs.simple_dataframe import DataFrame  # 自定义库替代 pandas
+from custom_libs import numpy_utils  # 自定义库替代 numpy
+from custom_libs import pandas_utils  # 自定义库替代 pandas
 import pyperclip
 import os
 import pyautogui
@@ -184,7 +184,7 @@ class WeChat:
         self.press_enter()
     
     # 获取所有通讯录中所有联系人
-    def find_all_contacts(self) -> DataFrame:
+    def find_all_contacts(self) -> pandas_utils.DataFrame:
         self.open_wechat()
         self.get_wechat()
         
@@ -202,7 +202,7 @@ class WeChat:
         scroll_pattern = list_control.GetScrollPattern()
         
         # 读取用户
-        contacts = DataFrame(columns=["昵称", "备注", "标签"])
+        contacts = pandas_utils.DataFrame(columns=["昵称", "备注", "标签"])
         # 如果不存在滑轮则直接读取
         if scroll_pattern is None:
             for contact in contacts_window.ListControl().GetChildren():
@@ -213,7 +213,7 @@ class WeChat:
 
                 contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
         else:
-            for percent in array_utils.arange(0, 1.001, 0.001):
+            for percent in numpy_utils.arange(0, 1.001, 0.001):
                 scroll_pattern.SetScrollPercent(-1, percent)
                 for contact in contacts_window.ListControl().GetChildren():
                     # 获取用户的昵称备注以及标签
@@ -260,7 +260,7 @@ class WeChat:
                 name = contact.TextControl().Name.replace("、", " ")
                 contacts.append(name)
         else:
-            for percent in array_utils.arange(0, 1.002, 0.01):
+            for percent in numpy_utils.arange(0, 1.002, 0.01):
                 scroll_pattern.SetScrollPercent(-1, percent)
                 for contact in contacts_window.ListControl().GetChildren():
                     # 获取群聊的名称 (将所有的顿号替换成了空格，这样才能在搜索框搜索到)
@@ -542,7 +542,7 @@ class WeChat:
         click(paste_button)
 
 if __name__ == '__main__':
-    # # 测试
+    # 测试
     path = r"C:\Program Files\Tencent\WeChat\WeChat.exe"
     # path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")

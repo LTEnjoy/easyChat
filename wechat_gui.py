@@ -13,6 +13,7 @@ from module import *
 from wechat_locale import WeChatLocale
 from style import AppTheme, create_title_label, create_group_box, create_primary_button, create_secondary_button, create_warning_button, create_danger_button
 from material_style import apply_material_stylesheet
+from message_sender import MessageSenderThread
 
 
 class WechatGUI(QWidget):
@@ -21,6 +22,7 @@ class WechatGUI(QWidget):
         super().__init__()
         self.wechat = WeChat(None)
         self.clock = ClockThread()
+        self.message_sender = MessageSenderThread()
 
         # 发消息的用户列表
         self.contacts = []
@@ -28,13 +30,21 @@ class WechatGUI(QWidget):
         # 初始化图形界面
         self.initUI()
         
-        # 判断全局热键是否被按下
-        self.hotkey_pressed = False
         keyboard.add_hotkey('ctrl+alt', self.hotkey_press)
+
+        # 连接消息发送线程的信号
+        self.message_sender.sending_error.connect(self.on_sending_error)
+        # self.message_sender.sending_finished.connect(self.on_sending_finished)
     
     def hotkey_press(self):
         print("hotkey pressed")
-        self.hotkey_pressed = True
+        self.message_sender.set_hotkey_pressed(True)
+    
+    def on_sending_error(self, error_msg):
+        QMessageBox.warning(self, "发送失败", error_msg)
+    
+    # def on_sending_finished(self):
+    #     QMessageBox.information(self, "发送完成", "消息发送完成！")
 
     # 选择用户界面的初始化
     def init_choose_contacts(self):
@@ -239,6 +249,13 @@ class WechatGUI(QWidget):
 
         # 按钮响应：开始定时
         def start_counting():
+            if self.msg.count() == 0:
+                QMessageBox.warning(self, "失败", "请先添加要发送的内容！")
+                return
+            if self.time_view.count() == 0:
+                QMessageBox.warning(self, "失败", "请先添加定时任务！")
+                return
+
             if self.clock.time_counting is True:
                 return
             else:
@@ -407,59 +424,16 @@ class WechatGUI(QWidget):
 
         # 发送按钮响应事件
         def send_msg(gap=None, st=None, ed=None):
-            # 在每次发送时进行初始化
-            self.hotkey_pressed = False
-
             # 获取发送间隔
             interval = send_interval.spin_box.value()
-
-            try:
-                # 如果未定义范围的开头和结尾，则默认发送全部信息
-                if st is None:
-                    st = 1
-                    ed = self.msg.count()
-                
-                # 获得用户编号列表
-                for user_i in range(self.contacts_view.count()):
-
-                    rank, name = self.contacts_view.item(user_i).text().split(':', 1)
-                    # For the first message, we need to search user
-                    search_user = True
-                    
-                    for msg_i in range(st - 1, ed):
-                        # 等待间隔时间
-                        time.sleep(int(interval))
-
-                        # 如果全局热键被按下，则停止发送
-                        if self.hotkey_pressed is True:
-                            QMessageBox.warning(self, "发送失败", f"热键已按下，已停止发送！")
-                            return
-                        
-                        msg = self.msg.item(msg_i).text().replace("\\n", "\n")
-                        
-                        _, type, to, content = msg.split(':', 3)
-                        # 判断是否需要发送给该用户
-                        if to == "all" or str(rank) in to.split(','):
-                            # 判断为文本内容
-                            if type == "text":
-                                self.wechat.send_msg(name, content, search_user)
-                            
-                            # 判断为文件内容
-                            elif type == "file":
-                                self.wechat.send_file(name, content, search_user)
-                            
-                            # 判断为@他人
-                            elif type == "at":
-                                self.wechat.at(name, content, search_user)
-                        
-                            # 搜索用户只在第一次发送时进行
-                            search_user = False
-
-            except Exception as e:
-                import traceback
-                error_msg = f"发送失败！请检查内容格式或是否有遗漏步骤！\n错误信息：{e}\n\n堆栈跟踪信息：\n{traceback.format_exc()}"
-                QMessageBox.warning(self, "发送失败", error_msg)
+            
+            if self.msg.count() == 0:
+                QMessageBox.warning(self, "发送失败", "请先添加要发送的内容！")
                 return
+
+            # 启动消息发送线程
+            self.message_sender.setup(self.wechat, self.contacts_view, self.msg, interval, st, ed)
+            self.message_sender.start()
 
         # 创建主布局
         main_layout = QVBoxLayout()
