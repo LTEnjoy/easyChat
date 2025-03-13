@@ -1,6 +1,47 @@
 from PyQt6.QtGui import QColor, QFont, QPalette, QIcon
 from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtWidgets import QLabel, QPushButton, QGroupBox, QButtonGroup
+from PyQt6.QtWidgets import QLabel, QPushButton, QGroupBox, QButtonGroup, QApplication
+from qt_material import apply_stylesheet
+
+# 自定义样式覆盖
+class StyleManager:
+    @staticmethod
+    def get_global_styles():
+        """返回全局样式字符串"""
+        return f"""
+            QGroupBox#tab-group-box {{
+                border: none;
+                font-size: 14pt;
+                font-weight: bold;
+            }}
+
+            QGroupBox#tab-group-box::title {{
+                color: {AppTheme.TEXT_PRIMARY};
+            }}
+
+            QLabel.path-label {{
+                background-color: white;
+                padding: 8px;
+                border-radius: 4px;
+                border: 1px solid {AppTheme.BORDER};
+            }}
+        """
+
+def apply_material_stylesheet(app):
+    """
+    应用Material Design样式到应用程序
+    
+    参数:
+        app: QApplication实例
+        theme: 主题名称，默认为light_blue.xml
+    """
+    # 应用qt-material样式
+    apply_stylesheet(app, theme='light_blue.xml')
+    
+    # 然后应用我们自己的全局样式覆盖
+    app.setStyleSheet(app.styleSheet() + StyleManager.get_global_styles())
+    
+    return app
 
 # 定义应用的主题颜色 - 这些颜色仅作为备用，主要样式由material_style提供
 class AppTheme:
@@ -23,7 +64,7 @@ class AppTheme:
     CARD_BACKGROUND = "#ffffff"  # 白色
     
     # 文本颜色
-    TEXT_PRIMARY = "#212121"  # 深灰色
+    TEXT_PRIMARY = "var(--primary)"  # 深灰色
     TEXT_SECONDARY = "#757575"  # 中灰色
     TEXT_HINT = "#9e9e9e"  # 浅灰色
     TEXT_DISABLED = "#bdbdbd"  # 更浅的灰色
@@ -40,6 +81,15 @@ def create_title_label(text):
 # 创建分组框
 def create_group_box(title, layout=None):
     group_box = QGroupBox(title)
+    if layout:
+        group_box.setLayout(layout)
+    return group_box
+
+# 创建选项卡分组框
+def create_tab_group_box(title, layout=None):
+    group_box = QGroupBox(title)
+    group_box.setObjectName("tab-group-box")
+    # group_box.setStyleSheet(f"QGroupBox#tab-group-box {{ border: none; font-size: 14pt; font-weight: bold; color: {AppTheme.TEXT_PRIMARY} !important; }}")
     if layout:
         group_box.setLayout(layout)
     return group_box

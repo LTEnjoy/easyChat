@@ -11,8 +11,7 @@ from PyQt6.QtGui import *
 from ui_auto_wechat import WeChat
 from module import *
 from wechat_locale import WeChatLocale
-from style import AppTheme, create_title_label, create_group_box, create_primary_button, create_secondary_button, create_warning_button, create_danger_button
-from material_style import apply_material_stylesheet
+from style import AppTheme, create_title_label, create_group_box, create_tab_group_box, create_primary_button, create_secondary_button, create_warning_button, create_danger_button, apply_material_stylesheet
 from message_sender import MessageSenderThread
 
 
@@ -111,11 +110,6 @@ class WechatGUI(QWidget):
         # 创建主布局
         main_layout = QVBoxLayout()
         
-        # 创建标题
-        title_label = create_title_label("联系人管理")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(title_label)
-        
         # 创建联系人列表区域
         contacts_group = create_group_box("待发送用户列表")
         contacts_layout = QHBoxLayout()
@@ -202,7 +196,7 @@ class WechatGUI(QWidget):
         # 按钮响应：增加时间
         def add_contact():
             inputs = [
-                "注：在每一个时间输入框内都可以使用英文逗号“,“来一次性区分多个数值进行多次定时。\n(例：分钟框输入 10,20,30,40)",
+                "注：在每一个时间输入框内都可以使用英文逗号\",\"来一次性区分多个数值进行多次定时。\n(例：分钟框输入 10,20,30,40)",
                 "月 (1~12)",
                 "日 (1~31)",
                 "小时（0~23）",
@@ -290,10 +284,10 @@ class WechatGUI(QWidget):
         # 创建主布局
         main_layout = QVBoxLayout()
         
-        # 创建标题
-        title_label = create_title_label("定时任务管理")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(title_label)
+        # 移除冗余标题
+        # title_label = create_title_label("定时任务管理")
+        # title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # main_layout.addWidget(title_label)
         
         # 创建定时任务区域
         schedule_group = create_group_box("定时任务列表")
@@ -438,11 +432,6 @@ class WechatGUI(QWidget):
         # 创建主布局
         main_layout = QVBoxLayout()
         
-        # 创建标题
-        title_label = create_title_label("消息发送管理")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(title_label)
-        
         # 创建消息内容区域
         message_group = create_group_box("消息内容")
         message_layout = QHBoxLayout()
@@ -536,7 +525,7 @@ class WechatGUI(QWidget):
         # 提示信息
         info = QLabel("请确保选择的语言与您的微信客户端语言一致")
         info.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        info.setStyleSheet(f"font-weight: bold; color: {AppTheme.TEXT_PRIMARY};")
+        info.setStyleSheet(f"font-weight: bold; color: {AppTheme.TEXT_SECONDARY};")
         layout.addWidget(info)
 
         # 语言选择按钮组
@@ -601,10 +590,10 @@ class WechatGUI(QWidget):
         # 创建主布局
         main_layout = QVBoxLayout()
         
-        # 创建标题
-        title_label = create_title_label("微信设置")
-        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(title_label)
+        # 移除冗余标题
+        # title_label = create_title_label("微信设置")
+        # title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # main_layout.addWidget(title_label)
         
         # 微信路径设置区域
         path_group = create_group_box("微信路径设置")
@@ -617,7 +606,7 @@ class WechatGUI(QWidget):
         path_info_layout.addWidget(path_label)
         self.path_label = QLabel("", self)
         self.path_label.setWordWrap(True)
-        self.path_label.setStyleSheet(f"background-color: white; padding: 8px; border-radius: 4px; border: 1px solid {AppTheme.BORDER};")
+        self.path_label.setProperty("class", "path-label")
         path_info_layout.addWidget(self.path_label, 1)  # 设置路径标签占用剩余空间
         
         # 选择微信exe路径的按钮
@@ -694,40 +683,50 @@ class WechatGUI(QWidget):
 
     def initUI(self):
         # 应用Material Design样式表
-        apply_material_stylesheet(QApplication.instance(), theme='light_blue.xml')
+        apply_material_stylesheet(QApplication.instance())
         
-        # 主布局 - 使用选项卡布局
+        # 主布局 - 使用垂直布局
         main_layout = QVBoxLayout()
-        tab_widget = QTabWidget()
         
         # 创建标题和版本信息
         # header_layout = QHBoxLayout()
         # title_label = create_title_label("EasyChat 微信助手")
         # title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         # header_layout.addWidget(title_label)
-        
-        # 创建各个选项卡
-        settings_tab = QWidget()
-        settings_tab.setLayout(self.init_wechat_settings())
-
-        contacts_tab = QWidget()
-        contacts_tab.setLayout(self.init_choose_contacts())
-        
-        message_tab = QWidget()
-        message_tab.setLayout(self.init_send_msg())
-        
-        schedule_tab = QWidget()
-        schedule_tab.setLayout(self.init_clock())
-        
-        # 添加选项卡
-        tab_widget.addTab(settings_tab, "微信设置")
-        tab_widget.addTab(contacts_tab, "联系人管理")
-        tab_widget.addTab(message_tab, "消息发送")
-        tab_widget.addTab(schedule_tab, "定时任务")
-        
-        # 添加所有组件到主布局
         # main_layout.addLayout(header_layout)
-        main_layout.addWidget(tab_widget)
+        
+        # 创建滚动区域以容纳所有内容
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+        
+        # 添加各个功能区域（原选项卡内容）
+        # 1. 微信设置区域
+        settings_group = create_tab_group_box("微信设置")
+        settings_group.setLayout(self.init_wechat_settings())
+        scroll_layout.addWidget(settings_group)
+        
+        # 2. 联系人管理区域
+        contacts_group = create_tab_group_box("联系人管理")
+        contacts_group.setLayout(self.init_choose_contacts())
+        scroll_layout.addWidget(contacts_group)
+        
+        # 3. 消息发送区域
+        message_group = create_tab_group_box("消息发送")
+        message_group.setLayout(self.init_send_msg())
+        scroll_layout.addWidget(message_group)
+        
+        # 4. 定时任务区域
+        schedule_group = create_tab_group_box("定时任务")
+        schedule_group.setLayout(self.init_clock())
+        scroll_layout.addWidget(schedule_group)
+        
+        # 设置滚动区域
+        scroll_content.setLayout(scroll_layout)
+        scroll_area.setWidget(scroll_content)
+        main_layout.addWidget(scroll_area)
         
         # 获取显示器分辨率并设置窗口大小
         screen = QApplication.instance().primaryScreen()
