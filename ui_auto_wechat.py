@@ -1,8 +1,10 @@
 import time
 import uiautomation as auto
 import subprocess
-import numpy as np
-import pandas as pd
+# import numpy as np
+# import pandas as pd
+from custom_libs import numpy_utils  # 自定义库替代 numpy
+from custom_libs import pandas_utils  # 自定义库替代 pandas
 import pyperclip
 import os
 import pyautogui
@@ -11,8 +13,8 @@ import pyautogui
 from ctypes import *
 from PIL import ImageGrab
 from clipboard import setClipboardFiles
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QMimeData, QUrl
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QMimeData, QUrl
 from typing import List
 
 from wechat_locale import WeChatLocale
@@ -92,10 +94,12 @@ class WeChat:
         self.open_wechat()
         self.get_wechat()
         
+        pyperclip.copy(name)
+        time.sleep(0.3)
         search_box = auto.EditControl(Depth=8, Name=self.lc.search)
         click(search_box)
         
-        pyperclip.copy(name)
+        time.sleep(0.3)
         auto.SendKeys("{Ctrl}v")
         
         
@@ -143,11 +147,12 @@ class WeChat:
             self.get_contact(name)
         pyperclip.copy(text)
 
-        # 等待粘贴
-        time.sleep(0.3)
+        # self.step_paste_execute()
+        time.sleep(0.5)
         auto.SendKeys("{Ctrl}v")
-
+        time.sleep(0.3)
         self.press_enter()
+
         # 发送消息后马上获取聊天记录，判断是否发送成功
         try:
             if self.get_dialogs(name, 1, False)[0][2] == text:
@@ -172,11 +177,14 @@ class WeChat:
         # 将文件复制到剪切板
         setClipboardFiles([path])
         
+        # self.step_paste_execute()
+        time.sleep(0.3)
         auto.SendKeys("{Ctrl}v")
+        time.sleep(0.3)
         self.press_enter()
     
     # 获取所有通讯录中所有联系人
-    def find_all_contacts(self) -> pd.DataFrame:
+    def find_all_contacts(self) -> pandas_utils.DataFrame:
         self.open_wechat()
         self.get_wechat()
         
@@ -194,7 +202,7 @@ class WeChat:
         scroll_pattern = list_control.GetScrollPattern()
         
         # 读取用户
-        contacts = pd.DataFrame(columns=["昵称", "备注", "标签"])
+        contacts = pandas_utils.DataFrame(columns=["昵称", "备注", "标签"])
         # 如果不存在滑轮则直接读取
         if scroll_pattern is None:
             for contact in contacts_window.ListControl().GetChildren():
@@ -205,7 +213,7 @@ class WeChat:
 
                 contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
         else:
-            for percent in np.arange(0, 1.001, 0.001):
+            for percent in numpy_utils.arange(0, 1.001, 0.001):
                 scroll_pattern.SetScrollPercent(-1, percent)
                 for contact in contacts_window.ListControl().GetChildren():
                     # 获取用户的昵称备注以及标签
@@ -218,13 +226,14 @@ class WeChat:
         # 对用户根据昵称进行去重
         contacts = contacts.drop_duplicates(subset=["昵称"])
         return contacts
-    
+
     # 获取所有群聊
     def find_all_groups(self):
         self.open_wechat()
         self.get_wechat()
         
         # 获取通讯录管理界面
+        time.sleep(0.3)
         click(auto.ButtonControl(Name=self.lc.contacts))
         list_control = auto.ListControl(Name=self.lc.contact)
         scroll_pattern = list_control.GetScrollPattern()
@@ -250,9 +259,8 @@ class WeChat:
                 # 获取群聊的名称 (将所有的顿号替换成了空格，这样才能在搜索框搜索到)
                 name = contact.TextControl().Name.replace("、", " ")
                 contacts.append(name)
-
         else:
-            for percent in np.arange(0, 1.002, 0.01):
+            for percent in numpy_utils.arange(0, 1.002, 0.01):
                 scroll_pattern.SetScrollPercent(-1, percent)
                 for contact in contacts_window.ListControl().GetChildren():
                     # 获取群聊的名称 (将所有的顿号替换成了空格，这样才能在搜索框搜索到)
@@ -261,7 +269,7 @@ class WeChat:
         
         # 返回去重过后的群聊
         return list(set(contacts))
-    
+
     # 检测微信是否收到新消息
     def check_new_msg(self):
         self.open_wechat()
@@ -306,7 +314,10 @@ class WeChat:
     def _auto_reply(self, element, text):
         click(element)
         pyperclip.copy(text)
+        # self.step_paste_execute()
+        time.sleep(0.3)
         auto.SendKeys("{Ctrl}v")
+        time.sleep(0.3)
         self.press_enter()
     
     # 识别聊天内容的类型
@@ -508,27 +519,47 @@ class WeChat:
 
         return groups
 
+    def step_paste_execute(self):
+        """
+        分步骤粘贴消息在聊天窗口
+        """
+        # 获取发送按钮
+        send_button = auto.ButtonControl(Depth=15, Name=self.lc.send)
+        
+        # 获取按钮位置
+        x, y = send_button.GetPosition()
+        
+        # 计算偏移位置（左上各偏移50像素）
+        offset_x = x - 50
+        offset_y = y - 50
+        
+        # 等待粘贴
+        time.sleep(1.0)
+        # 右键偏移后的位置
+        auto.RightClick(offset_x, offset_y)
+        time.sleep(0.5)
+        paste_button = auto.TextControl(Depth=7, Name="粘贴")
+        click(paste_button)
 
 if __name__ == '__main__':
-    # # 测试
-    path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    # 测试
+    path = r"C:\Program Files\Tencent\WeChat\WeChat.exe"
     # path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
-    
+
     # wechat.check_new_msg()
-    res = wechat.find_all_contacts()
-    print(res)
+    # res = wechat.find_all_contacts()
+    # print(res)
 
     # groups = wechat.find_all_groups()
     # print(groups)
     # print(len(groups))
     
-    # name = "文件"
+    name = "文件传输助手"
+    # wechat.find_all_groups()
+    wechat.get_contact(name)
     # msg = "你\n好"
-    # wechat.get_contact(name)
     # wechat.send_msg(name, msg)
+    # wechat.send_msg(name, "test")
     # logs = wechat.get_dialogs(name, 50)
     # print(logs)
-    
-    
-    

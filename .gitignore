@@ -1,0 +1,26 @@
+# Python 字节码文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 环境
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# auto 日志
+@AutomationLog.txt
+
+# 构建
+build/
+dist/
+dist_nuitka/
+pack_nuitka.py
+config.json
+
+# IDEA
+.idea/
