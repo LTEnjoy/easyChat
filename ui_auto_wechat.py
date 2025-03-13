@@ -147,10 +147,12 @@ class WeChat:
             self.get_contact(name)
         pyperclip.copy(text)
 
-        self.step_paste_execute()
-        # auto.SendKeys("{Ctrl}v")
-
+        # self.step_paste_execute()
+        time.sleep(0.5)
+        auto.SendKeys("{Ctrl}v")
+        time.sleep(0.3)
         self.press_enter()
+
         # 发送消息后马上获取聊天记录，判断是否发送成功
         try:
             if self.get_dialogs(name, 1, False)[0][2] == text:
@@ -175,8 +177,10 @@ class WeChat:
         # 将文件复制到剪切板
         setClipboardFiles([path])
         
-        self.step_paste_execute()
-        # auto.SendKeys("{Ctrl}v")
+        # self.step_paste_execute()
+        time.sleep(0.3)
+        auto.SendKeys("{Ctrl}v")
+        time.sleep(0.3)
         self.press_enter()
     
     # 获取所有通讯录中所有联系人
@@ -310,8 +314,10 @@ class WeChat:
     def _auto_reply(self, element, text):
         click(element)
         pyperclip.copy(text)
-        self.step_paste_execute()
-        # auto.SendKeys("{Ctrl}v")
+        # self.step_paste_execute()
+        time.sleep(0.3)
+        auto.SendKeys("{Ctrl}v")
+        time.sleep(0.3)
         self.press_enter()
     
     # 识别聊天内容的类型
@@ -514,6 +520,9 @@ class WeChat:
         return groups
 
     def step_paste_execute(self):
+        """
+        分步骤粘贴消息在聊天窗口
+        """
         # 获取发送按钮
         send_button = auto.ButtonControl(Depth=15, Name=self.lc.send)
         
@@ -529,7 +538,6 @@ class WeChat:
         # 右键偏移后的位置
         auto.RightClick(offset_x, offset_y)
         time.sleep(0.5)
-        # auto.Click(offset_x+5, offset_y+5) # 不知道为什么找不到粘贴按钮，采用hack实现
         paste_button = auto.TextControl(Depth=7, Name="粘贴")
         click(paste_button)
 
@@ -548,8 +556,8 @@ if __name__ == '__main__':
     # print(len(groups))
     
     name = "文件传输助手"
-    wechat.find_all_groups()
-    # wechat.get_contact(name)
+    # wechat.find_all_groups()
+    wechat.get_contact(name)
     # msg = "你\n好"
     # wechat.send_msg(name, msg)
     # wechat.send_msg(name, "test")
