@@ -18,8 +18,7 @@ class WechatGUI(QWidget):
         super().__init__()
 
         # 读取之前保存的配置文件，如果没有则新建一个
-        dir_path = os.path.dirname(__file__)
-        self.config_path = os.path.join(dir_path, "config.json")
+        self.config_path = "wechat_config.json"
         if os.path.exists(self.config_path):
             with open(self.config_path, "r", encoding="utf-8") as r:
                 self.config = json.load(r)
@@ -36,6 +35,7 @@ class WechatGUI(QWidget):
                 "messages": [],
                 "schedules": [],
             }
+            self.save_config()
 
         self.wechat = WeChat(self.config["settings"]["wechat_path"])
         self.clock = ClockThread()
@@ -177,6 +177,15 @@ class WechatGUI(QWidget):
 
     # 定时功能界面的初始化
     def init_clock(self):
+        # 在定时列表有变化后更新配置文件
+        def update_schedules():
+            schedules = []
+            for i in range(self.time_view.count()):
+                schedules.append(self.time_view.item(i).text())
+
+            self.config["schedules"] = schedules
+            self.save_config()
+            
         # 按钮响应：增加时间
         def add_contact():
             inputs = [
@@ -218,12 +227,16 @@ class WechatGUI(QWidget):
                     for year, month, day, hour, min in itertools.product(year_list, month_list, day_list, hour_list, min_list):
                         input = f"{year} {month} {day} {hour} {min} {st}-{ed}"
                         self.time_view.addItem(input)
+                    
+                    update_schedules()
 
         # 按钮响应：删除时间
         def del_contact():
             for i in range(self.time_view.count() - 1, -1, -1):
                 if self.time_view.item(i).isSelected():
                     self.time_view.takeItem(i)
+            
+            update_schedules()
 
         # 按钮响应：开始定时
         def start_counting():
@@ -260,8 +273,12 @@ class WechatGUI(QWidget):
 
         hbox = QHBoxLayout()
 
-        # 左边的用户列表
+        # 左边的时间列表
         self.time_view = MyListWidget()
+        # 加载配置文件里保存的用户
+        for schedule in self.config["schedules"]:
+            self.time_view.addItem(schedule)
+            
         self.clock.clocks = self.time_view
         hbox.addWidget(self.time_view)
 
@@ -293,7 +310,7 @@ class WechatGUI(QWidget):
 
     # 发送消息内容界面的初始化
     def init_send_msg(self):
-        # 在联系人有变化后更新配置文件
+        # 在发送消息有变化后更新配置文件
         def update_messages():
             messages = []
             for i in range(self.msg.count()):
@@ -418,7 +435,7 @@ class WechatGUI(QWidget):
 
         # 输入内容框
         self.msg = MyListWidget()
-        # 加载配置文件里保存的用户
+        # 加载配置文件里保存的内容
         for message in self.config["messages"]:
             self.msg.addItem(message)
 
