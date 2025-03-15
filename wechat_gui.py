@@ -1,6 +1,8 @@
 import sys
 import time
+import os
 import itertools
+import json
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -14,7 +16,28 @@ class WechatGUI(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.wechat = WeChat(None)
+
+        # 读取之前保存的配置文件，如果没有则新建一个
+        dir_path = os.path.dirname(__file__)
+        self.config_path = os.path.join(dir_path, "config.json")
+        if os.path.exists(self.config_path):
+            with open(self.config_path, "r", encoding="utf-8") as r:
+                self.config = json.load(r)
+
+        else:
+            # 默认配置
+            self.config = {
+                "settings": {
+                    "wechat_path": "",
+                    "send_interval": 0,
+                    "language": "zh-CN",
+                },
+                "contacts": [],
+                "messages": [],
+                "schedules": [],
+            }
+
+        self.wechat = WeChat(self.config["settings"]["wechat_path"])
         self.clock = ClockThread()
 
         # 发消息的用户列表
@@ -22,17 +45,31 @@ class WechatGUI(QWidget):
 
         # 初始化图形界面
         self.initUI()
-        
+
         # 判断全局热键是否被按下
         self.hotkey_pressed = False
         keyboard.add_hotkey('ctrl+alt', self.hotkey_press)
-    
+
+    # 保存当前的配置
+    def save_config(self):
+        with open(self.config_path, "w", encoding="utf8") as w:
+            json.dump(self.config, w, indent=4, ensure_ascii=False)
+
     def hotkey_press(self):
         print("hotkey pressed")
         self.hotkey_pressed = True
 
     # 选择用户界面的初始化
     def init_choose_contacts(self):
+        # 在联系人有变化后更新配置文件
+        def update_contacts():
+            contacts = []
+            for i in range(self.contacts_view.count()):
+                contacts.append(self.contacts_view.item(i).text())
+
+            self.config["contacts"] = contacts
+            self.save_config()
+
         # 读取联系人列表并保存
         def save_contacts():
             path = QFileDialog.getSaveFileName(self, "保存联系人列表", "contacts.csv", "表格文件(*.csv)")[0]
@@ -42,9 +79,9 @@ class WechatGUI(QWidget):
                 # with open(path, 'w', encoding='utf-8') as f:
                 #     for contact in contacts:
                 #         f.write(contact + '\n')
-                
+
                 QMessageBox.information(self, "保存成功", "联系人列表保存成功！")
-        
+
         # 保存群聊列表
         def save_groups():
             path = QFileDialog.getSaveFileName(self, "保存群聊列表", "groups.txt", "文本文件(*.txt)")[0]
@@ -53,9 +90,9 @@ class WechatGUI(QWidget):
                 with open(path, 'w', encoding='utf-8') as f:
                     for contact in contacts:
                         f.write(contact + '\n')
-                
+
                 QMessageBox.information(self, "保存成功", "群聊列表保存成功！")
-        
+
         # 读取联系人列表并加载
         def load_contacts():
             path = QFileDialog.getOpenFileName(self, "加载联系人列表", "", "文本文件(*.txt)")[0]
@@ -63,9 +100,10 @@ class WechatGUI(QWidget):
                 with open(path, 'r', encoding='utf-8') as f:
                     for line in f.readlines():
                         self.contacts_view.addItem(f"{self.contacts_view.count()+1}:{line.strip()}")
-                
+
+                update_contacts()
                 QMessageBox.information(self, "加载成功", "联系人列表加载成功！")
-        
+
         # 增加用户列表信息
         def add_contact():
             name_list, ok = QInputDialog.getText(self, '添加用户', '输入添加的用户名(可添加多个人名，用英文逗号,分隔):')
@@ -75,6 +113,7 @@ class WechatGUI(QWidget):
                     for name in names:
                         id = f"{self.contacts_view.count() + 1}"
                         self.contacts_view.addItem(f"{id}:{str(name).strip()}")
+                    update_contacts()
 
         # 删除用户信息
         def del_contact():
@@ -87,10 +126,17 @@ class WechatGUI(QWidget):
             for i in range(self.contacts_view.count()):
                 self.contacts_view.item(i).setText(f"{i+1}:{self.contacts_view.item(i).text().split(':')[1]}")
 
+            update_contacts()
+
         hbox = QHBoxLayout()
 
         # 左边的用户列表
         self.contacts_view = MyListWidget()
+
+        # 加载配置文件里保存的用户
+        for contact in self.config["contacts"]:
+            self.contacts_view.addItem(contact)
+
         self.clock.contacts = self.contacts_view
         for name in self.contacts:
             self.contacts_view.addItem(name)
@@ -100,22 +146,22 @@ class WechatGUI(QWidget):
         # 右边的按钮界面
         vbox = QVBoxLayout()
         vbox.stretch(1)
-        
+
         # 用户界面的按钮
         info = QLabel("待发送用户列表")
-        
+
         save_btn = QPushButton("保存微信好友列表")
         save_btn.clicked.connect(save_contacts)
-        
+
         save_group_btn = QPushButton("保存微信群聊列表")
         save_group_btn.clicked.connect(save_groups)
-        
+
         load_btn = QPushButton("加载用户txt文件")
         load_btn.clicked.connect(load_contacts)
-        
+
         add_btn = QPushButton("添加用户")
         add_btn.clicked.connect(add_contact)
-        
+
         del_btn = QPushButton("删除用户")
         del_btn.clicked.connect(del_contact)
 
@@ -161,14 +207,14 @@ class WechatGUI(QWidget):
                 if year == "" or month == "" or day == "" or hour == "" or min == "" or st == "" or ed == "":
                     QMessageBox.warning(self, "输入错误", "输入不能为空！")
                     return
-                
+
                 else:
                     year_list = year.split(',')
                     month_list = month.split(',')
                     day_list = day.split(',')
                     hour_list = hour.split(',')
                     min_list = min.split(',')
-                    
+
                     for year, month, day, hour, min in itertools.product(year_list, month_list, day_list, hour_list, min_list):
                         input = f"{year} {month} {day} {hour} {min} {st}-{ed}"
                         self.time_view.addItem(input)
@@ -189,25 +235,25 @@ class WechatGUI(QWidget):
             info.setStyleSheet("color:red")
             info.setText("定时发送（目前已开始）")
             self.clock.start()
-        
+
         # 按钮响应：结束定时
         def end_counting():
             self.clock.time_counting = False
             info.setStyleSheet("color:black")
             info.setText("定时发送（目前未开始）")
-        
+
         # 按钮相应：开启防止自动下线。开启后每隔一小时自动点击微信窗口，防止自动下线
         def prevent_offline():
             if self.clock.prevent_offline is True:
                 self.clock.prevent_offline = False
                 prevent_btn.setStyleSheet("color:black")
                 prevent_btn.setText("防止自动下线：（目前关闭）")
-            
+
             else:
                 # 弹出提示框
                 QMessageBox.information(self, "防止自动下线", "防止自动下线已开启！每隔一小时自动点击微信窗口，防"
                                                               "止自动下线。请不要在正常使用电脑时使用该策略。")
-                
+
                 self.clock.prevent_offline = True
                 prevent_btn.setStyleSheet("color:red")
                 prevent_btn.setText("防止自动下线：（目前开启）")
@@ -247,6 +293,15 @@ class WechatGUI(QWidget):
 
     # 发送消息内容界面的初始化
     def init_send_msg(self):
+        # 在联系人有变化后更新配置文件
+        def update_messages():
+            messages = []
+            for i in range(self.msg.count()):
+                messages.append(self.msg.item(i).text())
+
+            self.config["messages"] = messages
+            self.save_config()
+
         # 从txt中加载消息内容
         def load_text():
             path = QFileDialog.getOpenFileName(self, "加载内容文本", "", "文本文件(*.txt)")[0]
@@ -270,12 +325,14 @@ class WechatGUI(QWidget):
                 if text != "":
                     # 消息的序号
                     rank = self.msg.count() + 1
-                    
+
                     # 判断给文本是否是@信息
                     if text[:3] == "at:":
                         self.msg.addItem(f"{rank}:at:{to}:{str(text[3:])}")
                     else:
                         self.msg.addItem(f"{rank}:text:{to}:{str(text)}")
+
+                    update_messages()
 
         # 增加一个文件
         def add_file():
@@ -285,6 +342,7 @@ class WechatGUI(QWidget):
                 to = "all" if to == "" else to
                 if path != "":
                     self.msg.addItem(f"{self.msg.count()+1}:file:{to}:{str(path)}")
+                    update_messages()
 
         # 删除一条发送的信息
         def del_content():
@@ -296,6 +354,8 @@ class WechatGUI(QWidget):
             # 为所有剩余的信息重新设置编号
             for i in range(self.msg.count()):
                 self.msg.item(i).setText(f"{i+1}:"+self.msg.item(i).text().split(':', 1)[1])
+
+            update_messages()
 
         # 发送按钮响应事件
         def send_msg(gap=None, st=None, ed=None):
@@ -310,7 +370,7 @@ class WechatGUI(QWidget):
                 if st is None:
                     st = 1
                     ed = self.msg.count()
-                
+
                 # 获得用户编号列表
                 for user_i in range(self.contacts_view.count()):
                     # 等待间隔时间
@@ -319,30 +379,30 @@ class WechatGUI(QWidget):
                     rank, name = self.contacts_view.item(user_i).text().split(':', 1)
                     # For the first message, we need to search user
                     search_user = True
-                    
+
                     for msg_i in range(st - 1, ed):
                         # 如果全局热键被按下，则停止发送
                         if self.hotkey_pressed is True:
                             QMessageBox.warning(self, "发送失败", f"热键已按下，已停止发送！")
                             return
-                        
+
                         msg = self.msg.item(msg_i).text().replace("\\n", "\n")
-                        
+
                         _, type, to, content = msg.split(':', 3)
                         # 判断是否需要发送给该用户
                         if to == "all" or str(rank) in to.split(','):
                             # 判断为文本内容
                             if type == "text":
                                 self.wechat.send_msg(name, content, search_user)
-                            
+
                             # 判断为文件内容
                             elif type == "file":
                                 self.wechat.send_file(name, content, search_user)
-                            
+
                             # 判断为@他人
                             elif type == "at":
                                 self.wechat.at(name, content, search_user)
-                        
+
                             # 搜索用户只在第一次发送时进行
                             search_user = False
 
@@ -358,6 +418,10 @@ class WechatGUI(QWidget):
 
         # 输入内容框
         self.msg = MyListWidget()
+        # 加载配置文件里保存的用户
+        for message in self.config["messages"]:
+            self.msg.addItem(message)
+
         self.clock.send_func = send_msg
         self.clock.prevent_func = self.wechat.prevent_offline
 
@@ -367,6 +431,15 @@ class WechatGUI(QWidget):
 
         # 发送不同用户时的间隔
         send_interval = MySpinBox("发送不同用户时的间隔（秒）")
+        send_interval.spin_box.setValue(self.config["settings"]["send_interval"])
+
+        # 添加修改间隔的响应
+        def change_spin_box():
+            interval = send_interval.spin_box.value()
+            self.config["settings"]["send_interval"] = interval
+            self.save_config()
+
+        send_interval.spin_box.valueChanged.connect(change_spin_box)
 
         vbox_left.addWidget(info)
         vbox_left.addWidget(self.msg)
@@ -376,6 +449,7 @@ class WechatGUI(QWidget):
         # 右边的选择内容界面
         vbox_right = QVBoxLayout()
         vbox_right.stretch(1)
+
 
         load_btn = QPushButton("加载内容txt文件")
         load_btn.clicked.connect(load_text)
@@ -389,10 +463,10 @@ class WechatGUI(QWidget):
         del_btn = QPushButton("删除内容")
         del_btn.clicked.connect(del_content)
 
-        vbox_right.addWidget(load_btn)
         vbox_right.addWidget(text_btn)
         vbox_right.addWidget(file_btn)
         vbox_right.addWidget(del_btn)
+        vbox_right.addWidget(load_btn)
 
         # 整体布局
         hbox = QHBoxLayout()
@@ -406,10 +480,17 @@ class WechatGUI(QWidget):
         def switch_language():
             if lang_zh_CN_btn.isChecked():
                 self.wechat.lc = WeChatLocale("zh-CN")
+                self.config["settings"]["language"] = "zh-CN"
+
             elif lang_zh_TW_btn.isChecked():
                 self.wechat.lc = WeChatLocale("zh-TW")
+                self.config["settings"]["language"] = "zh-TW"
+
             elif lang_en_btn.isChecked():
                 self.wechat.lc = WeChatLocale("en-US")
+                self.config["settings"]["language"] = "en-US"
+
+            self.save_config()
 
         # 提示信息
         info = QLabel("请选择你的微信系统语言")
@@ -419,8 +500,14 @@ class WechatGUI(QWidget):
         lang_zh_TW_btn = QRadioButton("繁体中文")
         lang_en_btn = QRadioButton("English")
 
-        # 默认选择简体中文
-        lang_zh_CN_btn.setChecked(True)
+        if self.config["settings"]["language"] == "zh-CN":
+            lang_zh_CN_btn.setChecked(True)
+
+        elif self.config["settings"]["language"] == "zh-TW":
+            lang_zh_TW_btn.setChecked(True)
+
+        elif self.config["settings"]["language"] == "en-US":
+            lang_en_btn.setChecked(True)
 
         # 选择按钮的响应事件
         lang_zh_CN_btn.clicked.connect(switch_language)
@@ -444,7 +531,7 @@ class WechatGUI(QWidget):
         vbox = QVBoxLayout()
 
         # 显示微信exe路径
-        self.path_label = QLabel("", self)
+        self.path_label = QLabel(self.config["settings"]["wechat_path"], self)
         self.path_label.setWordWrap(True)
         # self.path_label.resize(self.width(), 100)
 
@@ -479,7 +566,7 @@ class WechatGUI(QWidget):
         vbox.addStretch(1)
 
         # qle.textChanged[str].connect(self.onChanged)
-        
+
         #获取显示器分辨率
         desktop = QApplication.desktop()
         screenRect = desktop.screenGeometry()
@@ -487,7 +574,7 @@ class WechatGUI(QWidget):
         width = screenRect.width()
 
         self.setLayout(vbox)
-        self.setFixedSize(width*0.2, height*0.6)
+        # self.setFixedSize(width*0.2, height*0.6)
         self.setWindowTitle('EasyChat微信助手(作者：LTEnjoy)')
         self.show()
 
@@ -497,6 +584,10 @@ class WechatGUI(QWidget):
         if path != "":
             self.path_label.setText(path)
             self.wechat.path = path
+
+            # 保存到配置文件里
+            self.config["settings"]["wechat_path"] = path
+            self.save_config()
 
     # 打开微信
     def open_wechat(self):
