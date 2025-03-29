@@ -332,23 +332,19 @@ class WechatGUI(QWidget):
         # 增加一条文本信息
         def add_text():
             inputs = [
-                "请输入发送的内容",
+                "是否需要at他人(无则不填，有则填写所有你要at的人名，用英文逗号分隔。要at所有人就填写'所有人')",
+                "请输入发送的文本内容(如果需要换行则输入\\n，例如你好\\n吃饭了吗？)",
                 "请指定发送给哪些用户(1,2,3代表发送给前三位用户)，如需全部发送请忽略此项",
             ]
             dialog = MultiInputDialog(inputs)
             if dialog.exec_() == QDialog.Accepted:
-                text, to = dialog.get_input()
+                at, text, to = dialog.get_input()
                 to = "all" if to == "" else to
                 if text != "":
                     # 消息的序号
                     rank = self.msg.count() + 1
 
-                    # 判断给文本是否是@信息
-                    if text[:3] == "at:":
-                        self.msg.addItem(f"{rank}:at:{to}:{str(text[3:])}")
-                    else:
-                        self.msg.addItem(f"{rank}:text:{to}:{str(text)}")
-
+                    self.msg.addItem(f"{rank}:text:{to}:{at}:{str(text)}")
                     update_messages()
 
         # 增加一个文件
@@ -410,15 +406,14 @@ class WechatGUI(QWidget):
                         if to == "all" or str(rank) in to.split(','):
                             # 判断为文本内容
                             if type == "text":
-                                self.wechat.send_msg(name, content, search_user)
+                                # 分出at的人和发送的文本内容
+                                at_names, text = content.split(":", 1)
+                                at_names = at_names.split(",")
+                                self.wechat.send_msg(name, at_names, text, search_user)
 
                             # 判断为文件内容
                             elif type == "file":
                                 self.wechat.send_file(name, content, search_user)
-
-                            # 判断为@他人
-                            elif type == "at":
-                                self.wechat.at(name, content, search_user)
 
                             # 搜索用户只在第一次发送时进行
                             search_user = False

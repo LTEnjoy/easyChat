@@ -108,56 +108,58 @@ class WeChat:
         # 获取发送按钮
         send_button = auto.ButtonControl(Depth=15, Name=self.lc.send)
         click(send_button)
-    
-    def at(self, name, at_name, search_user: bool = True) -> None:
+
+    def paste_text(self, text: str) -> None:
         """
-        在指定群聊中@他人（若@所有人需具备@所有人权限）
+        封装文本粘贴逻辑
+        Args:
+            text: 待发送文本
+        """
+        pyperclip.copy(text)
+        # 等待粘贴
+        time.sleep(0.3)
+        auto.SendKeys("{Ctrl}v")
+
+    def send_msg(self, name, at_names: List[str] = None, text: str = None, search_user: bool = True) -> bool:
+        """
+        搜索指定用户名的联系人发送信息, 同时可以在指定群聊中@他人（若@所有人需具备@所有人权限）
         Args:
             name:  群聊名称
-            at_name: 要@的人的昵称
+            at_name: 若发送对象为群，则可以@他人（若@所有人需具备@所有人权限）
+            text: 要@的人的消息
             search_user: 是否需要搜索群聊
         """
         if search_user:
             self.get_contact(name)
         
-        # 如果at_name为空则代表@所有人
-        if at_name == "":
-            auto.SendKeys("@{UP}{enter}")
-            self.press_enter()
-        
-        else:
-            auto.SendKeys(f"@{at_name}")
-            # 按下回车键确认要at的人
-            auto.SendKeys("{enter}")
-            self.press_enter()
-    
-    def send_msg(self, name, text, search_user: bool = True) -> bool:
-        """
-        搜索指定用户名的联系人发送信息
-        Args:
-            name: 指定用户名的名称，输入搜索框后出现的第一个人
-            text: 发送的文本信息
-            search_user: 是否需要搜索用户
-        """
-        if search_user:
-            self.get_contact(name)
-        pyperclip.copy(text)
+        if at_names is not None:
+            # @所有列表中的人名
+            for at_name in at_names:
+                # 如果at_name为 "所有人" 则代表@所有人
+                if at_name == "所有人":
+                    auto.SendKeys("@{UP}{enter}")
 
-        # 等待粘贴
-        time.sleep(0.3)
-        auto.SendKeys("{Ctrl}v")
+                else:
+                    auto.SendKeys(f"@{at_name}")
+                    # 按下回车键确认要at的人
+                    auto.SendKeys("{enter}")
+
+        # 如果发送信息不为空，则发送信息
+        if text is not None:
+            self.paste_text(text)
 
         self.press_enter()
+
         # 发送消息后马上获取聊天记录，判断是否发送成功
         try:
             if self.get_dialogs(name, 1, False)[0][2] == text:
                 return True
             else:
                 return False
-            
+
         except Exception:
             return False
-    
+
     # 搜索指定用户名的联系人发送文件
     def send_file(self, name: str, path: str, search_user: bool = True) -> None:
         """
@@ -511,19 +513,24 @@ class WeChat:
 
 if __name__ == '__main__':
     # # 测试
-    path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    # path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    # path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
     
     # wechat.check_new_msg()
-    res = wechat.find_all_contacts()
-    print(res)
+    # res = wechat.find_all_contacts()
+    # print(res)
 
     # groups = wechat.find_all_groups()
     # print(groups)
     # print(len(groups))
+
+    name = "四片"
+    at_name = ["fan", "wen", "所有人"]
+    text = "去不去吃饭"
+    wechat.send_msg(name, at_name, text)
     
-    # name = "文件"
+    # name = ""
     # msg = "你\n好"
     # wechat.get_contact(name)
     # wechat.send_msg(name, msg)
