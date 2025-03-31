@@ -132,6 +132,7 @@ class WeChat:
         if search_user:
             self.get_contact(name)
         
+        print(at_names)
         if at_names is not None:
             # @所有列表中的人名
             for at_name in at_names:
@@ -139,7 +140,7 @@ class WeChat:
                 if at_name == "所有人":
                     auto.SendKeys("@{UP}{enter}")
 
-                else:
+                elif at_name != "":
                     auto.SendKeys(f"@{at_name}")
                     # 按下回车键确认要at的人
                     auto.SendKeys("{enter}")
