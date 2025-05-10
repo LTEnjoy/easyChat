@@ -78,6 +78,17 @@ class WeChat:
     # 搜寻微信客户端控件
     def get_wechat(self):
         return auto.WindowControl(Depth=1, Name=self.lc.weixin)
+
+    # 获取当前聊天对象的昵称
+    def get_current_name(self):
+        wechat.open_wechat()
+        wechat.get_wechat()
+        # 等待焦点锁定在微信窗口
+        time.sleep(1)
+
+        # 获取聊天窗口
+        window = auto.GetFocusedControl()
+        return window.Name
     
     # 防止微信长时间挂机导致掉线
     def prevent_offline(self):
@@ -410,7 +421,7 @@ class WeChat:
                 break
             
     # 获取指定聊天窗口的聊天记录
-    def get_dialogs(self, name: str, n_msg: int,search_user: bool = True) -> List:
+    def get_dialogs(self, name: str, n_msg: int, search_user: bool = True) -> List:
         """
         Args:
             name: 聊天窗口的姓名
@@ -515,7 +526,7 @@ class WeChat:
 if __name__ == '__main__':
     # # 测试
     # path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    path = "D:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
+    path = "D:\Program Files (x86)\WeChat\WeChat.exe"
     wechat = WeChat(path, locale="zh-CN")
     
     # wechat.check_new_msg()
@@ -526,11 +537,14 @@ if __name__ == '__main__':
     # print(groups)
     # print(len(groups))
 
-    name = "四片"
-    at_name = ["fan", "wen", "所有人"]
-    text = "去不去吃饭"
-    wechat.send_msg(name, at_name, text)
-    
+    # name = "四片"
+    # at_name = ["fan", "wen", "所有人"]
+    # text = "去不去吃饭"
+    # wechat.send_msg(name, at_name, text)
+
+    # dialogs = wechat.get_dialogs("米婆", 5)
+    print(wechat.get_current_name())
+
     # name = ""
     # msg = "你\n好"
     # wechat.get_contact(name)
