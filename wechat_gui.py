@@ -218,11 +218,11 @@ class WechatGUI(QWidget):
                     return
 
                 else:
-                    year_list = year.split(',')
-                    month_list = month.split(',')
-                    day_list = day.split(',')
-                    hour_list = hour.split(',')
-                    min_list = min.split(',')
+                    year_list = [y.strip() for y in year.split(',')]
+                    month_list = [m.strip() for m in month.split(',')]
+                    day_list = [d.strip() for d in day.split(',')]
+                    hour_list = [h.strip() for h in hour.split(',')]
+                    min_list = [m.strip() for m in min.split(',')]
 
                     for year, month, day, hour, min in itertools.product(year_list, month_list, day_list, hour_list, min_list):
                         input = f"{year} {month} {day} {hour} {min} {st}-{ed}"

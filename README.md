@@ -2,7 +2,7 @@
 
 PC端微信助手（非web微信版）：定时发送信息；群发信息；自动回复等。直接下载最新的exe即可使用。
 
-最新编辑日期：2025/05/10
+最新编辑日期：2025/05/30
 
 有疑问推荐在Issues上提出以供他人参考。
 
@@ -21,6 +21,10 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 ## 更新日志
 
+#### 2025/05/30
+
+- 修正了定时时多余空格导致的格式问题，见 https://github.com/LTEnjoy/easyChat/issues/113。
+
 #### 2025/05/10
 
 - 增加了获取当前对话人昵称的函数``get_current_name()``，见 https://github.com/LTEnjoy/easyChat/issues/112 。
@@ -29,11 +33,12 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 - 将发送信息与@他人的功能合并为一个函数，允许用户在@他人的同时发送信息，见 https://github.com/LTEnjoy/easyChat/issues/104 。感谢[@Halogly](https://github.com/Halogly)提供的灵感。
 
+<details><summary><b>展开</b></summary>
+
 #### 2025/03/15
 
 - 增加了配置文件的自动更新，现在**用户的所有操作都会被自动存储并且自动加载**，不用担心重启程序后之前的操作丢失。感谢[@Mcayear](https://github.com/Mcayear)提供的灵感。
 
-<details><summary><b>展开</b></summary>
 
 #### 2025/02/14
 - 修复了获取微信全部好友功能的bug。
