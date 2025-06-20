@@ -295,9 +295,10 @@ class WeChat:
             if len(pane_control.GetChildren()) == 3:
                 print(f"{item.ButtonControl().Name} 有新消息")
                 # 判断该联系人是否需要自动回复
-                if item.ButtonControl().Name in self.auto_reply_contacts:
-                    print(f"自动回复 {item.ButtonControl().Name}")
-                    self._auto_reply(item, self.auto_reply_msg)
+                # （取消判断，全员自动回复）
+                # if item.ButtonControl().Name in self.auto_reply_contacts:
+                #     print(f"自动回复 {item.ButtonControl().Name}")
+                self._auto_reply(item, self.auto_reply_msg)
                 
             click(item)
             
