@@ -1,5 +1,6 @@
 import sys
 import time
+import datetime
 import threading
 import keyboard
 
@@ -26,32 +27,101 @@ class ClockThread(QThread):
         # 每隔多少分钟进行一次防止自动下线操作
         self.prevent_count = 60
 
+        # 新增：用于存储已执行过的任务标识，防止重复执行
+        self.executed_tasks = set()
+
+        # 用于防止掉线的内部计时器
+        self._prevent_timer = 0
+
     def __del__(self):
         self.wait()
 
     def run(self):
-        cnt = 60
-        while self.time_counting:
-            localtime = time.localtime(time.time())
-            year = localtime.tm_year
-            month = localtime.tm_mon
-            day = localtime.tm_mday
-            hour = localtime.tm_hour % 24
-            min = localtime.tm_min % 60
+        import uiautomation as auto
+        with auto.UIAutomationInitializerInThread():
+            # 初始化防止掉线的计时器，设置为 prevent_count 分钟对应的秒数
+            self._prevent_timer = self.prevent_count * 60
 
-            for i in range(self.clocks.count()):
-                clock_year, clock_month, clock_day, clock_hour, clock_min, st_ed = self.clocks.item(i).text().split(" ")
-                st, ed = st_ed.split('-')
-                if (int(clock_hour) == hour and int(clock_min) == min and int(clock_year) == year and
-                        int(clock_month) == month and int(clock_day) == day):
-                    self.send_func(st=int(st), ed=int(ed))
-                    # self.send_func()
-                    
-            if self.prevent_offline and cnt % self.prevent_count == 0:
-                self.prevent_func()
+            while self.time_counting:
+                now = datetime.datetime.now()
+                next_event_time = None
 
-            time.sleep(60)
-            cnt += 1
+                # --- 1. 遍历列表，查找最近的下一个闹钟时间 ---
+                try:
+                    for i in range(self.clocks.count()):
+                        task_id = self.clocks.item(i).text()
+                        # 如果任务已经执行过，则跳过
+                        if task_id in self.executed_tasks:
+                            continue
+
+                        parts = task_id.split(" ")
+                        clock_str = " ".join(parts[:5])
+                        dt_obj = datetime.datetime.strptime(clock_str, "%Y %m %d %H %M")
+
+                        # 只关心未来的任务
+                        if dt_obj > now:
+                            # 如果是第一个找到的未来任务，或者比已知的下一个任务更早
+                            if next_event_time is None or dt_obj < next_event_time:
+                                next_event_time = dt_obj
+                except Exception as e:
+                    # 在UI更新列表时，直接读取可能会有瞬时错误，做个保护
+                    print(f"读取闹钟列表时出错: {e}")
+                    time.sleep(1)  # 出错时短暂休眠后重试
+                    continue
+
+                # --- 2. 计算休眠时间 ---
+                sleep_seconds = 60  # 默认休眠60秒，如果没有找到任何未来任务
+
+                if next_event_time:
+                    delta = (next_event_time - now).total_seconds()
+                    # 确保休眠时间不为负
+                    sleep_seconds = max(0, delta)
+
+                # --- 3. 整合“防止掉线”的逻辑 ---
+                if self.prevent_offline:
+                    # 取“下一个闹钟”和“下一次防掉线”中更早发生的一个
+                    sleep_seconds = min(sleep_seconds, self._prevent_timer)
+
+                # --- 4. 执行休眠 ---
+                # sleep_seconds 可能是小数，time.sleep支持
+                time.sleep(sleep_seconds)
+
+                # 更新防止掉线的内部计时器
+                self._prevent_timer -= sleep_seconds
+                if self._prevent_timer <= 0:
+                    self._prevent_timer = 0  # 避免变为很大的负数
+
+                # --- 5. 休眠结束，检查并执行到期的任务 ---
+                now = datetime.datetime.now()  # 获取唤醒后的精确时间
+
+                # 检查并执行到期的闹钟
+                try:
+                    for i in range(self.clocks.count()):
+                        task_id = self.clocks.item(i).text()
+                        if task_id in self.executed_tasks:
+                            continue
+
+                        parts = task_id.split(" ")
+                        st_ed = parts[5]
+                        st, ed = st_ed.split('-')
+                        clock_str = " ".join(parts[:5])
+                        dt_obj = datetime.datetime.strptime(clock_str, "%Y %m %d %H %M")
+
+                        # 如果任务时间已到或已错过
+                        if dt_obj <= now:
+                            if self.send_func:
+                                self.send_func(st=int(st), ed=int(ed))
+                            # 记录为已执行
+                            self.executed_tasks.add(task_id)
+                except Exception as e:
+                    print(f"执行任务时读取闹钟列表出错: {e}")
+
+                # 检查并执行防止掉线
+                if self.prevent_offline and self._prevent_timer <= 0:
+                    if self.prevent_func:
+                        self.prevent_func()
+                    # 重置计时器
+                    self._prevent_timer = self.prevent_count * 60
 
 
 class MyListWidget(QListWidget):
