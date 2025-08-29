@@ -70,7 +70,7 @@ class ClockThread(QThread):
                     continue
 
                 # --- 2. 计算休眠时间 ---
-                sleep_seconds = 60  # 默认休眠60秒，如果没有找到任何未来任务
+                sleep_seconds = 0  # 默认休眠60秒，如果没有找到任何未来任务
 
                 if next_event_time:
                     delta = (next_event_time - now).total_seconds()
