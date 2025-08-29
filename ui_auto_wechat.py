@@ -102,7 +102,9 @@ class WeChat:
     def get_contact(self, name):
         self.open_wechat()
         self.get_wechat()
-        
+
+        # 防止微信还未加载出来，就执行搜索联系人控件，导致卡死
+        time.sleep(0.3)
         search_box = auto.EditControl(Depth=8, Name=self.lc.search)
         click(search_box)
         
