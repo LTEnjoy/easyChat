@@ -23,11 +23,11 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 #### 2025/08/30
 
-- 优化了定时发送功能，见 https://github.com/LTEnjoy/easyChat/pull/126。 感谢[@wustghj](https://github.com/wustghj)。
+- 优化了定时发送功能，见 https://github.com/LTEnjoy/easyChat/pull/126 。 感谢[@wustghj](https://github.com/wustghj)。
 
 #### 2025/05/30
 
-- 修正了定时时多余空格导致的格式问题，见 https://github.com/LTEnjoy/easyChat/issues/113。
+- 修正了定时时多余空格导致的格式问题，见 https://github.com/LTEnjoy/easyChat/issues/113 。
 
 #### 2025/05/10
 
