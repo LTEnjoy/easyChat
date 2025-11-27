@@ -1,8 +1,8 @@
-# easyChat （点击[下载](https://github.com/LTEnjoy/easyChat/releases/latest)最新exe程序）
+# easyChat （点击[下载](https://github.com/LTEnjoy/easyChat/releases/latest)最新exe程序，支持微信4.1版本）
 
 PC端微信助手（非web微信版）：定时发送信息；群发信息；自动回复等。直接下载最新的exe即可使用。
 
-最新编辑日期：2025/05/30
+最新编辑日期：2025/11/28
 
 有疑问推荐在Issues上提出以供他人参考。
 
@@ -21,9 +21,19 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 ## 更新日志
 
+#### 2025/11/28
+
+- 现在easyChat支持微信4.1版本,原来的3.9版本已被弃用🥳🥳🥳。
+
+#### 2025/08/30
+
+- 优化了定时发送功能，见 https://github.com/LTEnjoy/easyChat/pull/126 。 感谢[@wustghj](https://github.com/wustghj)。
+
 #### 2025/05/30
 
-- 修正了定时时多余空格导致的格式问题，见 https://github.com/LTEnjoy/easyChat/issues/113。
+- 修正了定时时多余空格导致的格式问题，见 https://github.com/LTEnjoy/easyChat/issues/113 。
+
+<details><summary><b>展开</b></summary>
 
 #### 2025/05/10
 
@@ -33,7 +43,6 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 - 将发送信息与@他人的功能合并为一个函数，允许用户在@他人的同时发送信息，见 https://github.com/LTEnjoy/easyChat/issues/104 。感谢[@Halogly](https://github.com/Halogly)提供的灵感。
 
-<details><summary><b>展开</b></summary>
 
 #### 2025/03/15
 

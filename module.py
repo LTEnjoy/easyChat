@@ -6,8 +6,6 @@ import keyboard
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from ui_auto_wechat import WeChat
-from functools import partial
 
 
 # 定时发送子线程类

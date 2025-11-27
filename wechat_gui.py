@@ -7,6 +7,7 @@ import json
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+# from ui_auto_wechat import WeChat
 from ui_auto_wechat import WeChat
 from module import *
 from wechat_locale import WeChatLocale
@@ -29,6 +30,7 @@ class WechatGUI(QWidget):
                 "settings": {
                     "wechat_path": "",
                     "send_interval": 0,
+                    "system_version": "new",
                     "language": "zh-CN",
                 },
                 "contacts": [],
@@ -37,7 +39,10 @@ class WechatGUI(QWidget):
             }
             self.save_config()
 
-        self.wechat = WeChat(self.config["settings"]["wechat_path"])
+        self.wechat = WeChat(
+            path=self.config["settings"]["wechat_path"],
+            locale=self.config["settings"]["language"],
+        )
         self.clock = ClockThread()
 
         # 发消息的用户列表
@@ -72,26 +77,30 @@ class WechatGUI(QWidget):
 
         # 读取联系人列表并保存
         def save_contacts():
-            path = QFileDialog.getSaveFileName(self, "保存联系人列表", "contacts.csv", "表格文件(*.csv)")[0]
-            if not path == "":
-                contacts = self.wechat.find_all_contacts()
-                contacts.to_csv(path, index=False, encoding='utf_8_sig')
-                # with open(path, 'w', encoding='utf-8') as f:
-                #     for contact in contacts:
-                #         f.write(contact + '\n')
+            # 弹出错误框提醒该功能暂未适配新版微信
+            QMessageBox.warning(self, "功能未适配", "该功能暂未适配新版微信，敬请期待！")
 
-                QMessageBox.information(self, "保存成功", "联系人列表保存成功！")
+            # path = QFileDialog.getSaveFileName(self, "保存联系人列表", "contacts.csv", "表格文件(*.csv)")[0]
+            # if not path == "":
+            #     contacts = self.wechat.find_all_contacts()
+            #     contacts.to_csv(path, index=False, encoding='utf_8_sig')
+            #     # with open(path, 'w', encoding='utf-8') as f:
+            #     #     for contact in contacts:
+            #     #         f.write(contact + '\n')
+            #
+            #     QMessageBox.information(self, "保存成功", "联系人列表保存成功！")
 
         # 保存群聊列表
         def save_groups():
-            path = QFileDialog.getSaveFileName(self, "保存群聊列表", "groups.txt", "文本文件(*.txt)")[0]
-            if not path == "":
-                contacts = self.wechat.find_all_groups()
-                with open(path, 'w', encoding='utf-8') as f:
-                    for contact in contacts:
-                        f.write(contact + '\n')
-
-                QMessageBox.information(self, "保存成功", "群聊列表保存成功！")
+            QMessageBox.warning(self, "功能未适配", "该功能暂未适配新版微信，敬请期待！")
+            # path = QFileDialog.getSaveFileName(self, "保存群聊列表", "groups.txt", "文本文件(*.txt)")[0]
+            # if not path == "":
+            #     contacts = self.wechat.find_all_groups()
+            #     with open(path, 'w', encoding='utf-8') as f:
+            #         for contact in contacts:
+            #             f.write(contact + '\n')
+            #
+            #     QMessageBox.information(self, "保存成功", "群聊列表保存成功！")
 
         # 读取联系人列表并加载
         def load_contacts():

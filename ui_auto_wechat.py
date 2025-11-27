@@ -43,17 +43,6 @@ def double_click(element):
     element.DoubleClick()
 
 
-# 微信的控件介绍。注意"depth"是直接调用auto进行控件搜索的深度（见函数内部代码示例）
-# 以群名“测试”为例：
-# 左侧聊天列表“测试”群               Name: '测试'     ControlType: ListItemControl    depth: 10
-# 左侧聊天列表“测试”群               Name: '测试'     ControlType: ButtonControl      depth: 12
-# 进入“测试”群界面之后上方的群名       Name: '测试'     ControlType: ButtonControl      depth: 14
-# “测试”群界面的内容框               Name: '消息'     ControlType: ListControl        depth: 12
-# 聊天界面的聊天记录按钮              Name: '聊天记录'   ControlType: ButtonControl      depth: 14
-# 聊天记录界面的图片按钮              Name: '图片与视频'     ControlType: TabItemControl      depth: 6
-# 聊天记录复制图片按钮               Name: '复制'   ControlType: MenuItemControl      depth: 5
-
-
 class WeChat:
     def __init__(self, path, locale="zh-CN"):
         # 微信打开路径
@@ -81,13 +70,16 @@ class WeChat:
 
     # 获取当前聊天对象的昵称
     def get_current_name(self):
-        wechat.open_wechat()
-        wechat.get_wechat()
+        # 打开微信，获取根窗口并通过点击获取焦点
+        self.open_wechat()
+        root = self.get_wechat()
+        click(root)
+
         # 等待焦点锁定在微信窗口
         time.sleep(1)
 
         # 获取聊天窗口
-        window = auto.GetFocusedControl()
+        window = auto.TextControl(Depth=20)
         return window.Name
     
     # 防止微信长时间挂机导致掉线
@@ -103,16 +95,20 @@ class WeChat:
         self.open_wechat()
         self.get_wechat()
         
-        search_box = auto.EditControl(Depth=8, Name=self.lc.search)
+        search_box = auto.EditControl(Depth=13, Name=self.lc.search)
         click(search_box)
         
         pyperclip.copy(name)
         auto.SendKeys("{Ctrl}v")
-        
-        
+
         # 等待客户端搜索联系人
         time.sleep(0.3)
         search_box.SendKeys("{enter}")
+
+        # 点击发送内容输入框来获取输入焦点
+        tool_bar = auto.ToolBarControl(Depth=15)
+        move(tool_bar)
+        click(tool_bar)
     
     # 鼠标移动到发送按钮处点击发送消息
     def press_enter(self):
@@ -136,14 +132,13 @@ class WeChat:
         搜索指定用户名的联系人发送信息, 同时可以在指定群聊中@他人（若@所有人需具备@所有人权限）
         Args:
             name:  群聊名称
-            at_name: 若发送对象为群，则可以@他人（若@所有人需具备@所有人权限）
+            at_names: 若发送对象为群，则可以@他人（若@所有人需具备@所有人权限）
             text: 要@的人的消息
             search_user: 是否需要搜索群聊
         """
         if search_user:
             self.get_contact(name)
         
-        print(at_names)
         if at_names is not None:
             # @所有列表中的人名
             for at_name in at_names:
@@ -191,6 +186,8 @@ class WeChat:
     
     # 获取所有通讯录中所有联系人
     def find_all_contacts(self) -> pd.DataFrame:
+        raise NotImplementedError("该方法尚未适配新版微信")
+
         self.open_wechat()
         self.get_wechat()
         
@@ -235,6 +232,8 @@ class WeChat:
     
     # 获取所有群聊
     def find_all_groups(self):
+        raise NotImplementedError("该方法尚未适配新版微信")
+
         self.open_wechat()
         self.get_wechat()
         
@@ -278,6 +277,8 @@ class WeChat:
     
     # 检测微信是否收到新消息
     def check_new_msg(self):
+        raise NotImplementedError("该方法尚未适配新版微信")
+
         self.open_wechat()
         self.get_wechat()
         
@@ -352,7 +353,6 @@ class WeChat:
             elif "以下为新消息" in list_item_control.Name:
                 value = 6
 
-                
         if value is None:
             raise ValueError("无法识别该控件类型")
         
@@ -371,7 +371,7 @@ class WeChat:
             num: 保存的最大数量（从最新图片开始保存）
             save_dir: 保存的目录
         """
-        
+        raise NotImplementedError("该方法尚未适配新版微信")
         # 进入图片聊天记录界面
         self.get_contact(name)
         click(auto.ButtonControl(Name=self.lc.chat_history, Depth=14))
@@ -431,6 +431,8 @@ class WeChat:
         Return:
             dialogs: 聊天记录列表，内部元素为三元组（信息类型，发送人，发送内容）
         """
+        raise NotImplementedError("该方法尚未适配新版微信")
+
         if search_user:
             list_control = self._get_chat_frame(name)
         else:
@@ -480,6 +482,8 @@ class WeChat:
         Return:
             groups: 聊天记录列表，每个元素为一个时间分块内的消息列表
         """
+        raise NotImplementedError("该方法尚未适配新版微信")
+
         n_msg = n_time_blocks * 5
         prev_dialogs = None
         groups = []
@@ -526,7 +530,7 @@ class WeChat:
 if __name__ == '__main__':
     # # 测试
     # path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    path = "D:\Program Files (x86)\WeChat\WeChat.exe"
+    path = "D:\Program Files (x86)\Weixin\Weixin.exe"
     wechat = WeChat(path, locale="zh-CN")
     
     # wechat.check_new_msg()
@@ -543,14 +547,22 @@ if __name__ == '__main__':
     # wechat.send_msg(name, at_name, text)
 
     # dialogs = wechat.get_dialogs("米婆", 5)
-    print(wechat.get_current_name())
 
-    # name = ""
-    # msg = "你\n好"
-    # wechat.get_contact(name)
-    # wechat.send_msg(name, msg)
-    # logs = wechat.get_dialogs(name, 50)
-    # print(logs)
+    # 单元测试
+    # print(wechat.get_current_name())
+
+    # wechat.get_contact("ltenjoy")
+
+    # 发送文本信息
+    name = "ltenjoy"
+    at_names = ["fan", "wen", "所有人"]
+    text = "去不去吃饭"
+    wechat.send_msg(name, [], text)
+
+    # 发送文件
+    # name = "ltenjoy"
+    # file_path = r"D:\Program Files (x86)\Weixin\Weixin.exe"
+    # wechat.send_file(name, file_path)
     
     
     
