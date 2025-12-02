@@ -103,7 +103,14 @@ class WeChat:
 
         # 等待客户端搜索联系人
         time.sleep(0.3)
-        search_box.SendKeys("{enter}")
+
+        # 现在群聊不会出现在搜索的第一行，需要手动选择
+        list_control = auto.ListControl(Depth=4)
+        for item in list_control.GetChildren():
+            # 联系人项的 ClassName 不包含 "XTableCell"，默认选择第一个联系人，点击进入窗口
+            if "XTableCell" not in item.ClassName:
+                click(item)
+                break
 
         # 点击发送内容输入框来获取输入焦点
         tool_bar = auto.ToolBarControl(Depth=15)
@@ -551,12 +558,17 @@ if __name__ == '__main__':
     # 单元测试
     # print(wechat.get_current_name())
 
-    # wechat.get_contact("ltenjoy")
+    # wechat.get_contact("斗地主")
 
     # 发送文本信息
-    name = "ltenjoy"
-    at_names = ["fan", "wen", "所有人"]
-    text = "去不去吃饭"
+    # name = "ltenjoy"
+    # at_names = ["fan", "wen", "所有人"]
+    # text = "去不去吃饭"
+    # wechat.send_msg(name, [], text)
+
+    # 发送文本信息到群聊
+    name = "斗地主"
+    text = "测试"
     wechat.send_msg(name, [], text)
 
     # 发送文件
