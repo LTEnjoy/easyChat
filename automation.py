@@ -1,113 +1,118 @@
+#!python3
+# -*- coding:utf-8 -*-
 import sys
-import os
 import time
 
-# 添加项目路径
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 import uiautomation as auto
-from ui_auto_wechat import WeChat
 
 
-def print_control_tree(control, depth=0, output_file=None, max_depth=20):
-    """
-    递归打印控件树
-    Args:
-        control: UI控件
-        depth: 当前深度
-        output_file: 输出文件句柄
-        max_depth: 最大递归深度
-    """
-    if depth > max_depth:
-        return
+def usage():
+    auto.Logger.ColorfullyWrite("""usage
+<Color=Cyan>-h</Color>      show command <Color=Cyan>help</Color>
+<Color=Cyan>-t</Color>      delay <Color=Cyan>time</Color>, default 3 seconds, begin to enumerate after Value seconds, this must be an integer
+        you can delay a few seconds and make a window active so automation can enumerate the active window
+<Color=Cyan>-d</Color>      enumerate tree <Color=Cyan>depth</Color>, this must be an integer, if it is null, enumerate the whole tree
+<Color=Cyan>-r</Color>      enumerate from <Color=Cyan>root</Color>:Desktop window, if it is null, enumerate from foreground window
+<Color=Cyan>-f</Color>      enumerate from <Color=Cyan>focused</Color> control, if it is null, enumerate from foreground window
+<Color=Cyan>-c</Color>      enumerate the control under <Color=Cyan>cursor</Color>, if depth is < 0, enumerate from its ancestor up to depth
+<Color=Cyan>-a</Color>      show <Color=Cyan>ancestors</Color> of the control under cursor
+<Color=Cyan>-n</Color>      show control full <Color=Cyan>name</Color>, if it is null, show first 30 characters of control's name in console,
+        always show full name in log file @AutomationLog.txt
+<Color=Cyan>-p</Color>      show <Color=Cyan>process id</Color> of controls
 
-    indent = "  " * depth
+if <Color=Red>UnicodeError</Color> or <Color=Red>LookupError</Color> occurred when printing,
+try to change the active code page of console window by using <Color=Cyan>chcp</Color> or see the log file <Color=Cyan>@AutomationLog.txt</Color>
+chcp, get current active code page
+chcp 936, set active code page to gbk
+chcp 65001, set active code page to utf-8
 
-    try:
-        # 获取控件信息
-        name = control.Name if hasattr(control, 'Name') else ''
-        control_type = control.ControlTypeName if hasattr(control, 'ControlTypeName') else 'Unknown'
-        automation_id = control.AutomationId if hasattr(control, 'AutomationId') else ''
-        class_name = control.ClassName if hasattr(control, 'ClassName') else ''
+examples:
+automation.py -t3
+automation.py -t3 -r -d1 -m -n
+automation.py -c -t3
 
-        # 获取位置信息
-        try:
-            rect = control.BoundingRectangle
-            position = f"({rect.left}, {rect.top}, {rect.width()}, {rect.height()})"
-        except:
-            position = "(?, ?, ?, ?)"
-
-        # 构建输出行
-        info_parts = [f"Depth={depth}"]
-        if name:
-            info_parts.append(f"Name='{name}'")
-        info_parts.append(f"Type={control_type}")
-        if automation_id:
-            info_parts.append(f"AutomationId='{automation_id}'")
-        if class_name:
-            info_parts.append(f"Class='{class_name}'")
-        info_parts.append(f"Rect={position}")
-
-        line = f"{indent}[{', '.join(info_parts)}]\n"
-
-        # 输出到文件和控制台
-        output_file.write(line)
-        print(line.rstrip())
-
-        # 递归处理子控件
-        try:
-            children = control.GetChildren()
-            for child in children:
-                print_control_tree(child, depth + 1, output_file, max_depth)
-        except:
-            pass
-
-    except Exception as e:
-        error_line = f"{indent}[ERROR: {str(e)}]\n"
-        output_file.write(error_line)
-        print(error_line.rstrip())
+""", writeToFile=False)
 
 
-def export_wechat_ui_tree():
-    """导出微信UI树"""
+def main():
+    import getopt
+    auto.Logger.Write('UIAutomation {} (Python {}.{}.{}, {} bit)\n'.format(auto.VERSION, sys.version_info.major, sys.version_info.minor, sys.version_info.micro, 64 if sys.maxsize > 0xFFFFFFFF else 32))
+    options, args = getopt.getopt(sys.argv[1:], 'hrfcanpd:t:',
+                                  ['help', 'root', 'focus', 'cursor', 'ancestor', 'showAllName', 'depth=',
+                                   'time='])
+    root = False
+    focus = False
+    cursor = False
+    ancestor = False
+    foreground = True
+    showAllName = False
+    depth = 0xFFFFFFFF
+    seconds = 3
+    showPid = False
+    for (o, v) in options:
+        if o in ('-h', '-help'):
+            usage()
+            sys.exit(0)
+        elif o in ('-r', '-root'):
+            root = True
+            foreground = False
+        elif o in ('-f', '-focus'):
+            focus = True
+            foreground = False
+        elif o in ('-c', '-cursor'):
+            cursor = True
+            foreground = False
+        elif o in ('-a', '-ancestor'):
+            ancestor = True
+            foreground = False
+        elif o in ('-n', '-showAllName'):
+            showAllName = True
+        elif o in ('-p', ):
+            showPid = True
+        elif o in ('-d', '-depth'):
+            depth = int(v)
+        elif o in ('-t', '-time'):
+            seconds = int(v)
+    if seconds > 0:
+        auto.Logger.Write('please wait for {0} seconds\n\n'.format(seconds), writeToFile=False)
+        time.sleep(seconds)
+    auto.Logger.ColorfullyLog('Starts, Current Cursor Position: <Color=Cyan>{}</Color>'.format(auto.GetCursorPos()))
+    control = None
+    if root:
+        control = auto.GetRootControl()
+    if focus:
+        control = auto.GetFocusedControl()
+    if cursor:
+        control = auto.ControlFromCursor()
+        if depth < 0:
+            while depth < 0 and control:
+                control = control.GetParentControl()
+                depth += 1
+            depth = 0xFFFFFFFF
+    if ancestor:
+        control = auto.ControlFromCursor()
+        if control:
+            auto.EnumAndLogControlAncestors(control, showAllName, showPid)
+        else:
+            auto.Logger.Write('IUIAutomation returns null element under cursor\n', auto.ConsoleColor.Yellow)
+    else:
+        indent = 0
+        if not control:
+            control = auto.GetFocusedControl()
+            controlList = []
+            while control:
+                controlList.insert(0, control)
+                control = control.GetParentControl()
+            if len(controlList) == 1:
+                control = controlList[0]
+            else:
+                control = controlList[1]
+                if foreground:
+                    indent = 1
+                    auto.LogControl(controlList[0], 0, showAllName, showPid)
+        auto.EnumAndLogControl(control, depth, showAllName, showPid, startDepth=indent)
+    auto.Logger.Log('Ends\n')
 
-    # 初始化微信客户端
-    path = r"D:\Program Files (x86)\Weixin\Weixin.exe"
-    wechat = WeChat(path, locale="zh-CN")
 
-    print("\n[1] 打开微信...")
-    wechat.open_wechat()
-    time.sleep(2)
-
-    print("\n[2] 获取微信窗口...")
-    try:
-        wechat_window = wechat.get_wechat()
-        print(f"    [OK] 找到微信窗口: {wechat_window.Name}")
-    except Exception as e:
-        print(f"    [ERROR] 无法找到微信窗口: {e}")
-        return
-
-    print("\n[3] 导出UI树到 wechat_ui_tree.txt ...")
-    output_path = "wechat_ui_tree.txt"
-
-    try:
-        with open(output_path, 'w', encoding='utf-8') as f:
-            print_control_tree(wechat_window, 0, f, max_depth=50)
-
-        print(f"\n文件保存在: {os.path.abspath(output_path)}")
-        print(f"文件大小: {os.path.getsize(output_path)} 字节")
-
-    except Exception as e:
-        print(f"\n[ERROR] 导出失败: {e}")
-        import traceback
-        traceback.print_exc()
-
-if __name__ == "__main__":
-    try:
-        export_wechat_ui_tree()
-    except KeyboardInterrupt:
-        print("\n\n用户中断")
-    except Exception as e:
-        print(f"\n[ERROR] 发生错误: {e}")
-        import traceback
-        traceback.print_exc()
+if __name__ == '__main__':
+    main()

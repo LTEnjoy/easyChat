@@ -43,6 +43,11 @@ def double_click(element):
     element.DoubleClick()
 
 
+# 鼠标滚轮向下滑动
+def wheel_down():
+    auto.WheelDown()
+
+
 class WeChat:
     def __init__(self, path, locale="zh-CN"):
         # 微信打开路径
@@ -193,94 +198,93 @@ class WeChat:
     
     # 获取所有通讯录中所有联系人
     def find_all_contacts(self) -> pd.DataFrame:
-        raise NotImplementedError("该方法尚未适配新版微信")
-
         self.open_wechat()
         self.get_wechat()
-        
+
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
-        list_control = auto.ListControl(Name=self.lc.contact)
-        # scroll_pattern = list_control.GetScrollPattern()
-        # scroll_pattern.SetScrollPercent(-1, 0)
-        contacts_menu = list_control.ButtonControl(Name=self.lc.manage_contacts)
+        # list_control = auto.ListItemControl(Depth=12, Name=self.lc.contact)
+        contacts_menu = auto.ListItemControl(Depth=12, foundIndex=1)
         click(contacts_menu)
-        
-        # 切换到通讯录管理界面
-        contacts_window = auto.GetForegroundControl()
-        list_control = contacts_window.ListControl()
-        scroll_pattern = list_control.GetScrollPattern()
-        
-        # 读取用户
+
+        # 将鼠标移动到联系人上以便可以通过鼠标滚轮往下滑动
+        move(auto.ListItemControl(Depth=8, foundIndex=1))
+
+        # 获取初始群聊列表
         contacts = pd.DataFrame(columns=["昵称", "备注", "标签"])
-        # 如果不存在滑轮则直接读取
-        if scroll_pattern is None:
-            for contact in contacts_window.ListControl().GetChildren():
-                # 获取用户的昵称备注以及标签
-                name = contact.TextControl().Name
-                note = contact.ButtonControl(foundIndex=2).Name
-                label = contact.ButtonControl(foundIndex=3).Name
-
+        contact_set = set()
+        for contact in auto.ListControl(Depth=7).GetChildren():
+            # 获取用户的昵称备注以及标签。注意这种方式没有办法准确获取昵称和备注，因为微信自身的信息组织问题。
+            name, note, label = contact.Name.rsplit(" ", maxsplit=2)
+            if name not in contact_set:
                 contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
-        else:
-            for percent in np.arange(0, 1.001, 0.001):
-                scroll_pattern.SetScrollPercent(-1, percent)
-                for contact in contacts_window.ListControl().GetChildren():
-                    # 获取用户的昵称备注以及标签
-                    name = contact.TextControl().Name
-                    note = contact.ButtonControl(foundIndex=2).Name
-                    label = contact.ButtonControl(foundIndex=3).Name
+                contact_set.add(name)
 
+        # 模拟鼠标下滑一直读取群聊列表直到无法下滑为止
+        num_trial = 3
+        while num_trial > 0:
+            ori_len = len(contact_set)
+
+            wheel_down()
+            for contact in auto.ListControl(Depth=7).GetChildren():
+                # 获取用户的昵称备注以及标签。注意这种方式没有办法准确获取昵称和备注，因为微信自身的信息组织问题。
+                name, note, label = contact.Name.rsplit(" ", maxsplit=2)
+                if name not in contact_set:
                     contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
+                    contact_set.add(name)
 
-        # 对用户根据昵称进行去重
-        contacts = contacts.drop_duplicates(subset=["昵称"])
+            # 如果没有新增群聊则减少尝试次数，尝试3次后退出
+            if len(contact_set) == ori_len:
+                num_trial -= 1
+            # 如果有新增群聊则重置尝试次数
+            else:
+                # num_trial = 3
+                pass
+        
         return contacts
     
     # 获取所有群聊
-    def find_all_groups(self):
-        raise NotImplementedError("该方法尚未适配新版微信")
-
+    def find_all_groups(self) -> list:
         self.open_wechat()
         self.get_wechat()
         
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
-        list_control = auto.ListControl(Name=self.lc.contact)
-        scroll_pattern = list_control.GetScrollPattern()
-        scroll_pattern.SetScrollPercent(-1, 0)
-        contacts_menu = list_control.ButtonControl(Name=self.lc.manage_contacts)
+        # list_control = auto.ListItemControl(Depth=12, Name=self.lc.contact)
+        contacts_menu = auto.ListItemControl(Depth=12, foundIndex=1)
         click(contacts_menu)
 
-        # 切换到通讯录管理界面
-        contacts_window = auto.GetForegroundControl()
-        
         # 点击最近群聊
-        click(contacts_window.ButtonControl(Name="最近群聊"))
+        click(auto.ListItemControl(Depth=6, foundIndex=5))
         
-        # 获取群聊列表
-        list_control = contacts_window.ListControl()
-        scroll_pattern = list_control.GetScrollPattern()
-        
-        # 读取群聊
-        contacts = []
-        # 如果不存在滑轮则直接读取
-        if scroll_pattern is None:
-            for contact in contacts_window.ListControl().GetChildren():
-                # 获取群聊的名称 (将所有的顿号替换成了空格，这样才能在搜索框搜索到)
-                name = contact.TextControl().Name.replace("、", " ")
-                contacts.append(name)
+        # 获取初始群聊列表
+        groups = set()
+        for i, group in enumerate(auto.ListControl(Depth=5).GetChildren()):
+            # 前几个不是群聊，跳过
+            if i >= 5:
+                name = group.Name.rsplit("(", maxsplit=1)[0]
+                groups.add(name)
 
-        else:
-            for percent in np.arange(0, 1.002, 0.01):
-                scroll_pattern.SetScrollPercent(-1, percent)
-                for contact in contacts_window.ListControl().GetChildren():
-                    # 获取群聊的名称 (将所有的顿号替换成了空格，这样才能在搜索框搜索到)
-                    name = contact.TextControl().Name.replace("、", " ")
-                    contacts.append(name)
-        
-        # 返回去重过后的群聊
-        return list(set(contacts))
+        # 模拟鼠标下滑一直读取群聊列表直到无法下滑为止
+        num_trial = 3
+        while num_trial > 0:
+            ori_len = len(groups)
+
+            wheel_down()
+            for i, group in enumerate(auto.ListControl(Depth=5).GetChildren()):
+                if i >= 5:
+                    name = group.Name.split("(")[0]
+                    groups.add(name)
+
+            # 如果没有新增群聊则减少尝试次数，尝试3次后退出
+            if len(groups) == ori_len:
+                num_trial -= 1
+            # 如果有新增群聊则重置尝试次数
+            else:
+                num_trial = 3
+
+        # 返回群聊列表
+        return list(groups)
     
     # 检测微信是否收到新消息
     def check_new_msg(self):
@@ -567,14 +571,17 @@ if __name__ == '__main__':
     # wechat.send_msg(name, [], text)
 
     # 发送文本信息到群聊
-    name = "斗地主"
-    text = "测试"
-    wechat.send_msg(name, [], text)
+    # name = "斗地主"
+    # text = "测试"
+    # wechat.send_msg(name, [], text)
 
     # 发送文件
     # name = "ltenjoy"
     # file_path = r"D:\Program Files (x86)\Weixin\Weixin.exe"
     # wechat.send_file(name, file_path)
     
-    
-    
+    # 获取群聊列表
+    # groups = wechat.find_all_groups()
+
+    # 获取好友列表
+    contacts = wechat.find_all_contacts()

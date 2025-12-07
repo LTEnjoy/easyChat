@@ -20,7 +20,7 @@ class WeChatLocale:
         
         "search":       {"en-US": "Search",         "zh-CN": "搜索",            "zh-TW": "搜尋"},
         "send":         {"en-US": "Send (S)",       "zh-CN": "发送(S)",         "zh-TW": "傳送（S）"},
-        "contact":      {"en-US": "contact",        "zh-CN": "联系人",          "zh-TW": "聯絡人"},
+        "contact":      {"en-US": "contact",        "zh-CN": "通讯录",          "zh-TW": "通訊錄"},
         "group_chat":   {"en-US": "Group Chat",     "zh-CN": "群聊",            "zh-TW": "群聊"},
         "manage_contacts":  {"en-US": "Manage Contacts", "zh-CN": "通讯录管理", "zh-TW": "通訊錄管理"},
 

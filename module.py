@@ -75,6 +75,8 @@ class ClockThread(QThread):
                     # 确保休眠时间不为负
                     sleep_seconds = max(0, delta)
 
+                print(sleep_seconds)
+
                 # --- 3. 整合“防止掉线”的逻辑 ---
                 if self.prevent_offline:
                     # 取“下一个闹钟”和“下一次防掉线”中更早发生的一个
