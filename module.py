@@ -252,9 +252,11 @@ class FileDialog(QDialog):
     
     def select(self):
         path_input = self.inputs[1]
-        path = QFileDialog.getOpenFileName(self, '打开文件', '/home')[0]
-        if path != "":
-            path_input.setText(path)
+        # 修改为支持多文件选择
+        paths = QFileDialog.getOpenFileNames(self, '打开文件', '/home')[0]
+        if paths:
+            # 将多个文件路径用分号连接显示
+            path_input.setText(";".join(paths))
     
     def get_input(self):
         """获取用户输入"""

@@ -4,7 +4,7 @@ import sys
 import time
 
 import uiautomation as auto
-
+/
 
 def usage():
     auto.Logger.ColorfullyWrite("""usage

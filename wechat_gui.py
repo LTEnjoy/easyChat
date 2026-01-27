@@ -360,10 +360,16 @@ class WechatGUI(QWidget):
         def add_file():
             dialog = FileDialog()
             if dialog.exec_() == QDialog.Accepted:
-                to, path = dialog.get_input()
+                to, paths = dialog.get_input()
                 to = "all" if to == "" else to
-                if path != "":
-                    self.msg.addItem(f"{self.msg.count()+1}:file:{to}:{str(path)}")
+                if paths != "":
+                    # 将多个文件路径按分号分隔
+                    path_list = paths.split(";")
+                    # 循环添加每个文件
+                    for path in path_list:
+                        path = path.strip()
+                        if path != "":
+                            self.msg.addItem(f"{self.msg.count()+1}:file:{to}:{str(path)}")
                     update_messages()
 
         # 删除一条发送的信息
