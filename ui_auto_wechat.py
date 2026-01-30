@@ -238,7 +238,7 @@ class WeChat:
                 num_trial -= 1
             # 如果有新增群聊则重置尝试次数
             else:
-                # num_trial = 3
+                num_trial = 3
                 pass
         
         return contacts
@@ -540,8 +540,8 @@ class WeChat:
 
 if __name__ == '__main__':
     # # 测试
-    # path = "C:\Program Files (x86)\Tencent\WeChat\WeChat.exe"
-    path = "D:\Program Files (x86)\Weixin\Weixin.exe"
+    path = "D:\Program Files (x86)\Tencent\Weixin\Weixin.exe"
+    # path = "D:\Program Files (x86)\Weixin\Weixin.exe"
     wechat = WeChat(path, locale="zh-CN")
     
     # wechat.check_new_msg()
@@ -565,10 +565,10 @@ if __name__ == '__main__':
     # wechat.get_contact("斗地主")
 
     # 发送文本信息
-    # name = "ltenjoy"
+    name = "ltenjoy"
     # at_names = ["fan", "wen", "所有人"]
-    # text = "去不去吃饭"
-    # wechat.send_msg(name, [], text)
+    text = "去不去吃饭"
+    wechat.send_msg(name, [], text)
 
     # 发送文本信息到群聊
     # name = "斗地主"
@@ -584,4 +584,4 @@ if __name__ == '__main__':
     # groups = wechat.find_all_groups()
 
     # 获取好友列表
-    contacts = wechat.find_all_contacts()
+    # contacts = wechat.find_all_contacts()
