@@ -98,6 +98,7 @@ class ClockThread(QThread):
                 try:
                     for i in range(self.clocks.count()):
                         task_id = self.clocks.item(i).text()
+                        print(task_id)
                         if task_id in self.executed_tasks:
                             continue
 
@@ -107,12 +108,17 @@ class ClockThread(QThread):
                         clock_str = " ".join(parts[:5])
                         dt_obj = datetime.datetime.strptime(clock_str, "%Y %m %d %H %M")
 
-                        # 如果任务时间已到或已错过
-                        if dt_obj <= now:
+                        # 只执行刚刚到期的任务（时间窗口：60秒内）
+                        time_diff = (now - dt_obj).total_seconds()
+                        if 0 <= time_diff <= 60:
                             if self.send_func:
                                 self.send_func(st=int(st), ed=int(ed))
                             # 记录为已执行
                             self.executed_tasks.add(task_id)
+                        elif time_diff > 60:
+                            # 超过60秒的任务标记为已过期，不再执行
+                            self.executed_tasks.add(task_id)
+
                 except Exception as e:
                     print(f"执行任务时读取闹钟列表出错: {e}")
 
