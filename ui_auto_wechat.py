@@ -67,7 +67,9 @@ class WeChat:
         
     # 打开微信客户端
     def open_wechat(self):
-        subprocess.Popen(self.path)
+        # 通过按下微信打开窗口的全局快捷键来打开微信窗口
+        auto.SendKeys("{Ctrl}{Alt}w")
+        # subprocess.Popen(self.path)
     
     # 搜寻微信客户端控件
     def get_wechat(self):
@@ -544,6 +546,9 @@ if __name__ == '__main__':
     # path = "D:\Program Files (x86)\Weixin\Weixin.exe"
     wechat = WeChat(path, locale="zh-CN")
     
+    # 打开微信窗口
+    wechat.open_wechat()
+    
     # wechat.check_new_msg()
     # res = wechat.find_all_contacts()
     # print(res)
@@ -565,10 +570,10 @@ if __name__ == '__main__':
     # wechat.get_contact("斗地主")
 
     # 发送文本信息
-    name = "ltenjoy"
-    # at_names = ["fan", "wen", "所有人"]
-    text = "去不去吃饭"
-    wechat.send_msg(name, [], text)
+    # name = "ltenjoy"
+    # # at_names = ["fan", "wen", "所有人"]
+    # text = "去不去吃饭"
+    # wechat.send_msg(name, [], text)
 
     # 发送文本信息到群聊
     # name = "斗地主"

@@ -54,6 +54,25 @@ class WechatGUI(QWidget):
         # 判断全局热键是否被按下
         self.hotkey_pressed = False
         keyboard.add_hotkey('ctrl+alt', self.hotkey_press)
+        
+        # 自动打开提示
+        self.show_wechat_open_notice()
+
+    # 显示微信打开方式变更提示
+    def show_wechat_open_notice(self):
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setWindowTitle("重要提示")
+        msg_box.setText("微信打开方式已变更")
+        msg_box.setInformativeText(
+            "由于微信版本更新，我们现在使用微信内置的快捷键来打开/隐藏微信窗口，请确保你的微信打开快捷键为Ctrl+Alt+w。具体查看方式为“设置”->“快捷键”->“显示/隐藏窗口”\n\n"
+            "⚠️ 注意事项：\n"
+            "• 如果微信已经打开且在前台，再次按快捷键会导致微信窗口被隐藏\n"
+            "• 为避免此问题，建议在使用定时发送功能前，先手动关闭或最小化微信窗口\n"
+            "• 这样可以确保程序能够正常打开微信并发送消息\n\n"
+        )
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.exec_()
 
     # 保存当前的配置
     def save_config(self):
@@ -557,21 +576,13 @@ class WechatGUI(QWidget):
         # 垂直布局
         vbox = QVBoxLayout()
 
-        # 显示微信exe路径
-        self.path_label = QLabel(self.config["settings"]["wechat_path"], self)
-        self.path_label.setWordWrap(True)
-        # self.path_label.resize(self.width(), 100)
-
-        # 选择微信exe路径的按钮
-        self.path_btn = QPushButton("选择微信打开路径", self)
-        self.path_btn.resize(self.path_btn.sizeHint())
-        self.path_btn.clicked.connect(self.choose_path)
+        # 关于自动打开微信界面的按钮
+        self.wechat_notice_btn = QPushButton("关于自动打开微信界面", self)
+        self.wechat_notice_btn.resize(self.wechat_notice_btn.sizeHint())
+        self.wechat_notice_btn.clicked.connect(self.show_wechat_open_notice)
 
         # 选择微信语言界面
         lang = self.init_language_choose()
-
-        # self.open_wechat_btn = QPushButton("打开微信", self)
-        # self.open_wechat_btn.clicked.connect(self.open_wechat)
 
         # 用户选择界面
         contacts = self.init_choose_contacts()
@@ -582,8 +593,7 @@ class WechatGUI(QWidget):
         # 定时界面
         clock = self.init_clock()
 
-        vbox.addWidget(self.path_label)
-        vbox.addWidget(self.path_btn)
+        vbox.addWidget(self.wechat_notice_btn)
         vbox.addLayout(lang)
         vbox.addLayout(contacts)
         vbox.addStretch(5)
@@ -604,21 +614,6 @@ class WechatGUI(QWidget):
         # self.setFixedSize(width*0.2, height*0.6)
         self.setWindowTitle('EasyChat微信助手(作者：LTEnjoy)')
         self.show()
-
-    # 选择微信exe路径
-    def choose_path(self):
-        path = QFileDialog.getOpenFileName(self, '打开文件', '/home')[0]
-        if path != "":
-            self.path_label.setText(path)
-            self.wechat.path = path
-
-            # 保存到配置文件里
-            self.config["settings"]["wechat_path"] = path
-            self.save_config()
-
-    # 打开微信
-    def open_wechat(self):
-        self.wechat.open_wechat()
 
 
 if __name__ == '__main__':
