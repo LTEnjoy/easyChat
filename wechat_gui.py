@@ -53,7 +53,7 @@ class WechatGUI(QWidget):
 
         # 判断全局热键是否被按下
         self.hotkey_pressed = False
-        keyboard.add_hotkey('ctrl+alt', self.hotkey_press)
+        keyboard.add_hotkey('ctrl+alt+q', self.hotkey_press)
         
         # 自动打开提示
         self.show_wechat_open_notice()
