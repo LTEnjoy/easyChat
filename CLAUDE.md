@@ -8,6 +8,22 @@ EasyChat is a PC WeChat automation assistant that uses UI automation to control 
 
 **Important**: This project currently supports WeChat version 4.1. Some features (like `check_new_msg`, `get_dialogs`, `save_dialog_pictures`) are marked as `NotImplementedError` and have not been adapted to the new WeChat version.
 
+## Prerequisites
+
+**CRITICAL**: Windows Narrator mode (讲述人) must be enabled for `uiautomation` to work properly. Without it, the application cannot detect WeChat UI controls. This is the #1 cause of runtime failures.
+
+## Key Dependencies
+
+Core dependencies (from requirements.txt, which has UTF-16 encoding):
+- **PyQt5 5.15.7** - GUI framework
+- **uiautomation 2.0.17** - Windows UI automation library
+- **pyperclip 1.8.2** - Clipboard operations for text
+- **keyboard 0.13.5** - Global hotkey handling (Ctrl+Alt+Q to interrupt)
+- **pyautogui 0.9.54** - Additional automation utilities
+- **pandas 2.0.3** - Data handling for contact lists
+- **pyinstaller 5.12.0** - Executable packaging
+- **pywin32 304** - Windows API access
+
 ## Architecture
 
 ### Core Components
@@ -53,7 +69,11 @@ python wechat_gui.py
 ```bash
 python pack.py
 ```
-This uses PyInstaller to create a standalone `.exe` file.
+This uses PyInstaller to create a standalone `.exe` file. The actual command is:
+```bash
+pyinstaller.exe -Fw wechat_gui.py
+```
+Output: `dist/wechat_gui.exe`
 
 ### Testing Core Functions
 Run the `__main__` section in `ui_auto_wechat.py` with your WeChat path:
@@ -65,6 +85,11 @@ wechat = WeChat(path, locale="zh-CN")
 
 ## Key Technical Details
 
+### User Interaction Features
+- **Interrupt Hotkey**: Users can press `Ctrl+Alt+Q` to terminate sending operations mid-process (handled by `keyboard` library global hook in `wechat_gui.py`)
+- **Anti-Auto-Logout**: Optional feature to prevent WeChat from automatically logging out during long idle periods (triggers every hour)
+- **Multi-File Selection**: File upload dialogs support selecting multiple files simultaneously
+
 ### UI Automation Strategy
 - Uses `uiautomation` library to locate WeChat controls by `Depth`, `Name`, `ClassName`, and `foundIndex`
 - Control depths are hardcoded (e.g., `Depth=13` for search box) and may break with WeChat UI updates
@@ -72,7 +97,8 @@ wechat = WeChat(path, locale="zh-CN")
 - Message sending: Uses clipboard paste (`Ctrl+V`) instead of direct text input for reliability
 
 ### Configuration Management
-- All user settings stored in `wechat_config.json` with structure:
+- **Auto-Save**: All user settings stored in `wechat_config.json` with automatic persistence after EVERY user action (add/delete contacts, messages, schedules). No manual save required.
+- Configuration structure:
   ```json
   {
     "settings": {"wechat_path": "", "send_interval": 0, "system_version": "new", "language": "zh-CN"},
@@ -81,13 +107,19 @@ wechat = WeChat(path, locale="zh-CN")
     "schedules": []
   }
   ```
-- Auto-saves after every user action (add/delete contacts, messages, schedules)
+- Config is loaded automatically on startup and saved after each modification in GUI
 
 ### Message Format in GUI
 Messages are stored as colon-separated strings:
 - Text: `{rank}:text:{to}:{at_names}:{content}`
 - File: `{rank}:file:{to}:{path}`
 - `to` can be "all" or comma-separated user indices like "1,2,3"
+- Content supports `\n` for newlines (e.g., "Hello\nWorld" sends as two lines)
+
+### Bulk Loading from TXT Files
+- **Users TXT**: One contact name per line, loaded via "加载用户txt文件" button
+- **Content TXT**: Format `all:content` or `1,2,3:content` per line (colon-separated: recipient list, then message)
+- TXT loading only supports text messages, not file attachments
 
 ### Scheduled Messaging
 - `ClockThread` in `module.py` checks time every second
@@ -102,11 +134,11 @@ The `find_all_contacts()` method has known reliability issues:
 
 ## Common Pitfalls
 
-1. **WeChat Version Compatibility**: Hardcoded control depths break when WeChat updates its UI. Use `automation.py` to inspect the new control tree.
+1. **WeChat Version Compatibility**: Hardcoded control depths break when WeChat updates its UI. Use `automation.py` to inspect the new control tree. Latest supported version: 4.1 (as of 2026/03/09).
 
-2. **Search Box Behavior**: Groups no longer appear as first search result. Code now skips "XTableCell" items to find actual contacts (line 116 in ui_auto_wechat.py).
+2. **WeChat Launch Method**: Recent versions (2026/03/09 fix) use a new launch method to avoid triggering new login popup. Don't modify WeChat startup logic without understanding the workaround.
 
-3. **Narrator Mode Required**: WeChat must have Windows Narrator mode enabled for `uiautomation` to work properly (mentioned in README).
+3. **Search Box Behavior**: Groups no longer appear as first search result. Code now skips "XTableCell" items to find actual contacts (line 116 in ui_auto_wechat.py).
 
 4. **Clipboard Race Conditions**: 0.3s delays after clipboard operations are critical. Removing them causes paste failures.
 
@@ -114,8 +146,10 @@ The `find_all_contacts()` method has known reliability issues:
 
 ## File Encoding Note
 
-`requirements.txt` appears to have encoding issues (shows as binary characters). Dependencies include:
-- PyQt5, uiautomation, pyperclip, keyboard, pandas, pyautogui, pyinstaller
+`requirements.txt` is UTF-16 encoded (appears as spaced characters when read as UTF-8). Key dependencies are listed in the "Key Dependencies" section above. Install with:
+```bash
+pip install -r requirements.txt
+```
 
 ## Code Style Observations
 
@@ -123,3 +157,4 @@ The `find_all_contacts()` method has known reliability issues:
 - Minimal error handling (relies on try-except at high level)
 - GUI uses nested layouts (QVBoxLayout, QHBoxLayout) without Qt Designer
 - No unit tests present
+- Code is actively maintained (latest update: 2026/03/09)

@@ -65,11 +65,36 @@ class WeChat:
         assert locale in WeChatLocale.getSupportedLocales()
         self.lc = WeChatLocale(locale)
         
+    # 检查微信窗口是否可见
+    def is_wechat_visible(self):
+        try:
+            wechat_window = auto.WindowControl(Depth=1, Name=self.lc.weixin, searchDepth=1)
+            # 检查窗口是否存在且可见（非最小化）
+            if wechat_window.Exists(0, 0):
+                # 获取窗口句柄
+                hwnd = wechat_window.NativeWindowHandle
+                # 使用 Windows API 检查窗口是否可见且未最小化
+                # IsWindowVisible 检查窗口是否可见
+                # IsIconic 检查窗口是否最小化
+                user32 = windll.user32
+                is_visible = user32.IsWindowVisible(hwnd)
+                is_minimized = user32.IsIconic(hwnd)
+                return is_visible and not is_minimized
+            return False
+        except:
+            return False
+
     # 打开微信客户端
     def open_wechat(self):
-        # 通过按下微信打开窗口的全局快捷键来打开微信窗口
+        # 先检查微信窗口是否已经可见
+        if self.is_wechat_visible():
+            # 如果已经可见，只需要激活窗口到前台
+            wechat_window = self.get_wechat()
+            wechat_window.SetFocus()
+            return
+
+        # 如果窗口不可见，通过按下微信打开窗口的全局快捷键来打开微信窗口
         auto.SendKeys("{Ctrl}{Alt}w")
-        # subprocess.Popen(self.path)
     
     # 搜寻微信客户端控件
     def get_wechat(self):
@@ -548,7 +573,7 @@ if __name__ == '__main__':
     
     # 打开微信窗口
     wechat.open_wechat()
-    
+    wechat.open_wechat()
     # wechat.check_new_msg()
     # res = wechat.find_all_contacts()
     # print(res)
