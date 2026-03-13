@@ -242,7 +242,19 @@ class WeChat:
         contact_set = set()
         for contact in auto.ListControl(Depth=7).GetChildren():
             # 获取用户的昵称备注以及标签。注意这种方式没有办法准确获取昵称和备注，因为微信自身的信息组织问题。
-            name, note, label = contact.Name.rsplit(" ", maxsplit=2)
+            try:
+                name, note, label = contact.Name.rsplit(" ", maxsplit=2)
+            except ValueError:
+                # 如果没有足够的空格，尝试用更少的分隔
+                parts = contact.Name.rsplit(" ", maxsplit=1) if " " in contact.Name else [contact.Name]
+                if len(parts) == 2:
+                    name, note = parts
+                    label = ""
+                else:
+                    name = parts[0]
+                    note = ""
+                    label = ""
+            
             if name not in contact_set:
                 contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
                 contact_set.add(name)
@@ -255,7 +267,19 @@ class WeChat:
             wheel_down()
             for contact in auto.ListControl(Depth=7).GetChildren():
                 # 获取用户的昵称备注以及标签。注意这种方式没有办法准确获取昵称和备注，因为微信自身的信息组织问题。
-                name, note, label = contact.Name.rsplit(" ", maxsplit=2)
+                try:
+                    name, note, label = contact.Name.rsplit(" ", maxsplit=2)
+                except ValueError:
+                    # 如果没有足够的空格，尝试用更少的分隔
+                    parts = contact.Name.rsplit(" ", maxsplit=1) if " " in contact.Name else [contact.Name]
+                    if len(parts) == 2:
+                        name, note = parts
+                        label = ""
+                    else:
+                        name = parts[0]
+                        note = ""
+                        label = ""
+                
                 if name not in contact_set:
                     contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
                     contact_set.add(name)
