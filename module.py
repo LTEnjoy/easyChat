@@ -11,6 +11,9 @@ from PyQt5.QtGui import *
 
 # 定时发送子线程类
 class ClockThread(QThread):
+    # 定义信号：用于通知GUI显示错误信息
+    error_signal = pyqtSignal(str)
+
     def __init__(self):
         super().__init__()
         # 是否正在定时
@@ -63,9 +66,13 @@ class ClockThread(QThread):
                                 next_event_time = dt_obj
                 except Exception as e:
                     # 在UI更新列表时，直接读取可能会有瞬时错误，做个保护
-                    print(f"读取闹钟列表时出错: {e}")
-                    time.sleep(1)  # 出错时短暂休眠后重试
-                    continue
+                    error_msg = f"读取闹钟列表时出错: {e}"
+                    print(error_msg)
+                    # 停止定时任务
+                    self.time_counting = False
+                    # 发送信号通知GUI显示错误
+                    self.error_signal.emit(error_msg)
+                    return
 
                 # --- 2. 计算休眠时间 ---
                 sleep_seconds = 0  # 默认休眠0秒，如果没有找到任何未来任务
@@ -120,7 +127,13 @@ class ClockThread(QThread):
                             self.executed_tasks.add(task_id)
 
                 except Exception as e:
-                    print(f"执行任务时读取闹钟列表出错: {e}")
+                    error_msg = f"执行任务时读取闹钟列表出错: {e}"
+                    print(error_msg)
+                    # 停止定时任务
+                    self.time_counting = False
+                    # 发送信号通知GUI显示错误
+                    self.error_signal.emit(error_msg)
+                    return
 
                 # 检查并执行防止掉线
                 if self.prevent_offline and self._prevent_timer <= 0:

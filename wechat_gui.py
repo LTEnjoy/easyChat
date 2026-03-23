@@ -44,6 +44,8 @@ class WechatGUI(QWidget):
             locale=self.config["settings"]["language"],
         )
         self.clock = ClockThread()
+        # 连接定时任务错误信号到弹窗函数
+        self.clock.error_signal.connect(self.show_clock_error)
 
         # 发消息的用户列表
         self.contacts = []
@@ -82,6 +84,15 @@ class WechatGUI(QWidget):
     def hotkey_press(self):
         print("hotkey pressed")
         self.hotkey_pressed = True
+
+    # 显示定时任务错误弹窗
+    def show_clock_error(self, error_msg):
+        """当定时任务执行出错时显示弹窗提示用户"""
+        # 更新界面状态为未开始
+        self.clock_info.setStyleSheet("color:black")
+        self.clock_info.setText("定时发送（目前未开始）")
+        # 弹出错误提示
+        QMessageBox.critical(self, "定时任务执行错误", error_msg)
 
     # 选择用户界面的初始化
     def init_choose_contacts(self):
@@ -273,15 +284,15 @@ class WechatGUI(QWidget):
             else:
                 self.clock.time_counting = True
 
-            info.setStyleSheet("color:red")
-            info.setText("定时发送（目前已开始）")
+            self.clock_info.setStyleSheet("color:red")
+            self.clock_info.setText("定时发送（目前已开始）")
             self.clock.start()
 
         # 按钮响应：结束定时
         def end_counting():
             self.clock.time_counting = False
-            info.setStyleSheet("color:black")
-            info.setText("定时发送（目前未开始）")
+            self.clock_info.setStyleSheet("color:black")
+            self.clock_info.setText("定时发送（目前未开始）")
 
         # 按钮相应：开启防止自动下线。开启后每隔一小时自动点击微信窗口，防止自动下线
         def prevent_offline():
@@ -314,7 +325,7 @@ class WechatGUI(QWidget):
         vbox = QVBoxLayout()
         vbox.stretch(1)
 
-        info = QLabel("定时发送（目前未开始）")
+        self.clock_info = QLabel("定时发送（目前未开始）")
         add_btn = QPushButton("添加时间")
         add_btn.clicked.connect(add_contact)
         del_btn = QPushButton("删除时间")
@@ -326,7 +337,7 @@ class WechatGUI(QWidget):
         prevent_btn = QPushButton("防止自动下线：（目前关闭）")
         prevent_btn.clicked.connect(prevent_offline)
 
-        vbox.addWidget(info)
+        vbox.addWidget(self.clock_info)
         vbox.addWidget(add_btn)
         vbox.addWidget(del_btn)
         vbox.addWidget(start_btn)
