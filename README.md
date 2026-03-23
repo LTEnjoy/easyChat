@@ -23,7 +23,7 @@ PC端微信助手（非web微信版）：定时发送信息；群发信息；自
 
 #### 2026/03/23
 
-- 添加了定时任务出错时的报错提醒 https://github.com/LTEnjoy/easyChat/issues/162。 
+- 添加了定时任务出错时的报错提醒 https://github.com/LTEnjoy/easyChat/issues/162 。 
 
 #### 2026/03/09
 
