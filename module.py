@@ -282,6 +282,30 @@ class FileDialog(QDialog):
         return [i.text() for i in self.inputs]
 
 
+class MyDoubleSpinBox(QWidget):
+    def __init__(self, desc: str, **kwargs):
+        """
+        附带标签的DoubleSpinBox，支持小数输入
+        Args:
+            desc: 默认的标签
+        """
+        super().__init__(**kwargs)
+
+        layout = QHBoxLayout()
+
+        self.desc = desc
+        self.label = QLabel(desc)
+
+        self.spin_box = QDoubleSpinBox()
+        self.spin_box.setDecimals(1)
+        self.spin_box.setSingleStep(0.1)
+        self.spin_box.setRange(0.0, 60.0)
+
+        layout.addWidget(self.label)
+        layout.addWidget(self.spin_box)
+        self.setLayout(layout)
+
+
 class MySpinBox(QWidget):
     def __init__(self, desc: str, **kwargs):
         """

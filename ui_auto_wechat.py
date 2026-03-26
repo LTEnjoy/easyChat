@@ -64,6 +64,9 @@ class WeChat:
 
         assert locale in WeChatLocale.getSupportedLocales()
         self.lc = WeChatLocale(locale)
+
+        # 搜索联系人后等待对话框弹出的时间（秒），可由GUI动态修改
+        self.search_wait = 0.3
         
     # 检查微信窗口是否可见
     def is_wechat_visible(self):
@@ -138,7 +141,7 @@ class WeChat:
         auto.SendKeys("{Ctrl}v")
 
         # 等待客户端搜索联系人
-        time.sleep(0.3)
+        time.sleep(self.search_wait)
 
         # 现在群聊不会出现在搜索的第一行，需要手动选择
         list_control = auto.ListControl(Depth=4)

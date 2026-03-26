@@ -30,6 +30,7 @@ class WechatGUI(QWidget):
                 "settings": {
                     "wechat_path": "",
                     "send_interval": 0,
+                    "search_wait": 0.3,
                     "system_version": "new",
                     "language": "zh-CN",
                 },
@@ -43,6 +44,7 @@ class WechatGUI(QWidget):
             path=self.config["settings"]["wechat_path"],
             locale=self.config["settings"]["language"],
         )
+        self.wechat.search_wait = self.config["settings"].get("search_wait", 0.3)
         self.clock = ClockThread()
         # 连接定时任务错误信号到弹窗函数
         self.clock.error_signal.connect(self.show_clock_error)
@@ -498,9 +500,22 @@ class WechatGUI(QWidget):
 
         send_interval.spin_box.valueChanged.connect(change_spin_box)
 
+        # 搜索联系人等待时间
+        search_wait = MyDoubleSpinBox("搜索联系人等待时间（秒）")
+        search_wait.spin_box.setValue(self.config["settings"].get("search_wait", 0.3))
+
+        def change_search_wait():
+            val = search_wait.spin_box.value()
+            self.config["settings"]["search_wait"] = val
+            self.wechat.search_wait = val
+            self.save_config()
+
+        search_wait.spin_box.valueChanged.connect(change_search_wait)
+
         vbox_left.addWidget(info)
         vbox_left.addWidget(self.msg)
         vbox_left.addWidget(send_interval)
+        vbox_left.addWidget(search_wait)
         vbox_left.addWidget(send_btn)
 
         # 右边的选择内容界面

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 EasyChat is a PC WeChat automation assistant that uses UI automation to control the WeChat desktop client. It provides scheduled messaging, bulk messaging, and auto-reply functionality through a PyQt5 GUI. The project uses `uiautomation` to interact with WeChat's UI controls since web WeChat is no longer available.
 
-**Important**: This project currently supports WeChat version 4.1. Some features (like `check_new_msg`, `get_dialogs`, `save_dialog_pictures`) are marked as `NotImplementedError` and have not been adapted to the new WeChat version.
+**Important**: This project currently supports WeChat version 4.1.8+. Some features (like `check_new_msg`, `get_dialogs`, `save_dialog_pictures`) are marked as `NotImplementedError` and have not been adapted to the new WeChat version.
 
 ## Prerequisites
 
@@ -71,7 +71,7 @@ python pack.py
 ```
 This uses PyInstaller to create a standalone `.exe` file. The actual command is:
 ```bash
-pyinstaller.exe -Fw wechat_gui.py
+pyinstaller.exe -Fw --noupx wechat_gui.py
 ```
 Output: `dist/wechat_gui.exe`
 
@@ -134,7 +134,7 @@ The `find_all_contacts()` method has known reliability issues:
 
 ## Common Pitfalls
 
-1. **WeChat Version Compatibility**: Hardcoded control depths break when WeChat updates its UI. Use `automation.py` to inspect the new control tree. Latest supported version: 4.1 (as of 2026/03/09).
+1. **WeChat Version Compatibility**: Hardcoded control depths break when WeChat updates its UI. Use `automation.py` to inspect the new control tree. Latest supported version: 4.1.8+ (as of 2026/03/26).
 
 2. **WeChat Launch Method**: Recent versions (2026/03/09 fix) use a new launch method to avoid triggering new login popup. Don't modify WeChat startup logic without understanding the workaround.
 
@@ -157,4 +157,4 @@ pip install -r requirements.txt
 - Minimal error handling (relies on try-except at high level)
 - GUI uses nested layouts (QVBoxLayout, QHBoxLayout) without Qt Designer
 - No unit tests present
-- Code is actively maintained (latest update: 2026/03/09)
+- Code is actively maintained (latest update: 2026/03/26)
