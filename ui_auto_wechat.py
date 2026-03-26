@@ -127,7 +127,11 @@ class WeChat:
         self.open_wechat()
         self.get_wechat()
         
-        search_box = auto.EditControl(Depth=13, Name=self.lc.search)
+        # 搜索框在不同的界面上深度不同（例如聊天界面和通讯录界面），因此统一先切换到聊天界面
+        chat_interface = auto.ButtonControl(Depth=6, Name=self.lc.weixin)
+        click(chat_interface)
+        
+        search_box = auto.EditControl(Depth=15, Name=self.lc.search)
         click(search_box)
         
         pyperclip.copy(name)
@@ -144,15 +148,15 @@ class WeChat:
                 click(item)
                 break
 
-        # 点击发送内容输入框来获取输入焦点
-        tool_bar = auto.ToolBarControl(Depth=15)
-        move(tool_bar)
-        click(tool_bar)
+        # 点击发送内容输入框来获取输入焦点 (4.1.8之后的版本不需要)
+        # tool_bar = auto.ToolBarControl(Depth=15)
+        # move(tool_bar)
+        # click(tool_bar)
     
     # 鼠标移动到发送按钮处点击发送消息
     def press_enter(self):
         # 获取发送按钮
-        send_button = auto.ButtonControl(Depth=15, Name=self.lc.send)
+        send_button = auto.ButtonControl(Depth=18, Name=self.lc.send)
         click(send_button)
 
     def paste_text(self, text: str) -> None:
@@ -230,8 +234,7 @@ class WeChat:
 
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
-        # list_control = auto.ListItemControl(Depth=12, Name=self.lc.contact)
-        contacts_menu = auto.ListItemControl(Depth=12, foundIndex=1)
+        contacts_menu = auto.ListItemControl(Depth=14, foundIndex=1)
         click(contacts_menu)
 
         # 将鼠标移动到联系人上以便可以通过鼠标滚轮往下滑动
@@ -277,13 +280,12 @@ class WeChat:
         
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
-        # list_control = auto.ListItemControl(Depth=12, Name=self.lc.contact)
-        contacts_menu = auto.ListItemControl(Depth=12, foundIndex=1)
+        contacts_menu = auto.ListItemControl(Depth=14, foundIndex=1)
         click(contacts_menu)
 
         # 点击最近群聊
         click(auto.ListItemControl(Depth=6, foundIndex=5))
-        
+
         # 获取初始群聊列表
         groups = set()
         for i, group in enumerate(auto.ListControl(Depth=5).GetChildren()):
@@ -572,8 +574,7 @@ if __name__ == '__main__':
     wechat = WeChat(path, locale="zh-CN")
     
     # 打开微信窗口
-    wechat.open_wechat()
-    wechat.open_wechat()
+    # wechat.open_wechat()
     # wechat.check_new_msg()
     # res = wechat.find_all_contacts()
     # print(res)
@@ -595,10 +596,10 @@ if __name__ == '__main__':
     # wechat.get_contact("斗地主")
 
     # 发送文本信息
-    # name = "ltenjoy"
-    # # at_names = ["fan", "wen", "所有人"]
-    # text = "去不去吃饭"
-    # wechat.send_msg(name, [], text)
+    name = "ltenjoy"
+    # at_names = ["fan", "wen", "所有人"]
+    text = "去不去吃饭"
+    wechat.send_msg(name, [], text)
 
     # 发送文本信息到群聊
     # name = "斗地主"
@@ -607,7 +608,7 @@ if __name__ == '__main__':
 
     # 发送文件
     # name = "ltenjoy"
-    # file_path = r"D:\Program Files (x86)\Weixin\Weixin.exe"
+    # file_path = r"C:\Users\Dell\Pictures\takagi.jpeg"
     # wechat.send_file(name, file_path)
     
     # 获取群聊列表
