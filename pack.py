@@ -3,7 +3,7 @@ import os
 
 # 用来自动打包成exe程序
 def main():
-    cmd = f"pyinstaller.exe -Fw --noupx wechat_gui.py"
+    cmd = f"pyinstaller.exe -Fw --noupx D:\PycharmProjects\easyChat\wechat_gui.py"
 
     # 执行命令并打印输出
     result = os.system(cmd)

@@ -75,7 +75,8 @@ class ClockThread(QThread):
                     return
 
                 # --- 2. 计算休眠时间 ---
-                sleep_seconds = 0  # 默认休眠0秒，如果没有找到任何未来任务
+                # 没有任何未来任务时，休眠60秒后再检查，避免忙循环占用CPU
+                sleep_seconds = 60
 
                 if next_event_time:
                     delta = (next_event_time - now).total_seconds()
