@@ -159,7 +159,7 @@ class WeChat:
     # 鼠标移动到发送按钮处点击发送消息
     def press_enter(self):
         # 获取发送按钮
-        send_button = auto.ButtonControl(Depth=18, Name=self.lc.send)
+        send_button = auto.ButtonControl(Depth=20, Name=self.lc.send)
         click(send_button)
 
     def paste_text(self, text: str) -> None:
