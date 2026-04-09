@@ -138,9 +138,12 @@ class ClockThread(QThread):
 
                 # 检查并执行防止掉线
                 if self.prevent_offline and self._prevent_timer <= 0:
-                    if self.prevent_func:
-                        self.prevent_func()
-                    # 重置计时器
+                    try:
+                        if self.prevent_func:
+                            self.prevent_func()
+                    except Exception as e:
+                        self.error_signal.emit(f"防止掉线操作失败: {e}")
+                    # 重置计时器（无论成功与否都重置，避免连续触发）
                     self._prevent_timer = self.prevent_count * 60
 
 

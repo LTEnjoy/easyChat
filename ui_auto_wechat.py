@@ -117,25 +117,25 @@ class WeChat:
         window = auto.TextControl(Depth=20)
         return window.Name
     
-    # 防止微信长时间挂机导致掉线
-    def prevent_offline(self):
+    # 打开微信并将焦点定位到搜索框（公共逻辑，防止深度值散落多处）
+    def _focus_search_box(self):
         self.open_wechat()
         self.get_wechat()
-        
-        search_box = auto.EditControl(Depth=8, Name=self.lc.search)
-        click(search_box)
-    
-    # 搜索指定用户
-    def get_contact(self, name):
-        self.open_wechat()
-        self.get_wechat()
-        
+
         # 搜索框在不同的界面上深度不同（例如聊天界面和通讯录界面），因此统一先切换到聊天界面
         chat_interface = auto.ButtonControl(Depth=6, Name=self.lc.weixin)
         click(chat_interface)
-        
+
         search_box = auto.EditControl(Depth=15, Name=self.lc.search)
         click(search_box)
+
+    # 防止微信长时间挂机导致掉线
+    def prevent_offline(self):
+        self._focus_search_box()
+
+    # 搜索指定用户
+    def get_contact(self, name):
+        self._focus_search_box()
         
         pyperclip.copy(name)
         auto.SendKeys("{Ctrl}v")
