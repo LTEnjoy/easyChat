@@ -69,7 +69,7 @@ class WechatGUI(QWidget):
         keyboard.add_hotkey('ctrl+alt+q', self.hotkey_press)
         
         # 自动打开提示
-        self.show_wechat_open_notice()
+        self.show_wechat_update_notice()
 
     # 根据当前配置重新实例化 self.wechat，并更新 clock 引用
     def _reinit_wechat(self):
@@ -83,9 +83,25 @@ class WechatGUI(QWidget):
         # prevent_func 持有的是绑定方法引用，版本切换后必须重新绑定
         if hasattr(self, "clock"):
             self.clock.prevent_func = self.wechat.prevent_offline
-
+    
     # 显示微信打开方式变更提示
     def show_wechat_open_notice(self):
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setWindowTitle("重要提示")
+        msg_box.setText("更新说明")
+        msg_box.setInformativeText(
+            "由于微信版本更新，我们现在使用微信内置的快捷键来打开/隐藏微信窗口，请确保你的微信打开快捷键为Ctrl+Alt+w。具体查看方式为“设置”->“快捷键”->“显示/隐藏窗口”\n\n"
+            "⚠️ 注意事项：\n"
+            "• 如果微信已经打开且在前台，再次按快捷键会导致微信窗口被隐藏\n"
+            "• 为避免此问题，建议在使用定时发送功能前，先手动关闭或最小化微信窗口\n"
+            "• 这样可以确保程序能够正常打开微信并发送消息\n\n"
+        )
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.exec_()
+    
+    # 显示微信打开方式变更提示
+    def show_wechat_update_notice(self):
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setWindowTitle("重要提示")
@@ -637,7 +653,7 @@ class WechatGUI(QWidget):
         vbox.addLayout(hbox)
 
         return vbox
-
+    
     def initUI(self):
         # 垂直布局
         vbox = QVBoxLayout()
