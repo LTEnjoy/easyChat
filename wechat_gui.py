@@ -3,14 +3,21 @@ import time
 import os
 import itertools
 import json
+import importlib
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-# from ui_auto_wechat import WeChat
-from ui_auto_wechat import WeChat
 from module import *
 from wechat_locale import WeChatLocale
+from versions import VERSIONS, get_version_labels, get_default_version
+
+
+def _load_wechat_class(version_label: str):
+    """根据版本标签动态加载对应的 WeChat class"""
+    module_path = VERSIONS[version_label]
+    module = importlib.import_module(module_path)
+    return module.WeChat
 
 
 class WechatGUI(QWidget):
@@ -31,7 +38,7 @@ class WechatGUI(QWidget):
                     "wechat_path": "",
                     "send_interval": 0,
                     "search_wait": 0.3,
-                    "system_version": "new",
+                    "system_version": "微信 4.1.9.21",
                     "language": "zh-CN",
                 },
                 "contacts": [],
@@ -40,6 +47,8 @@ class WechatGUI(QWidget):
             }
             self.save_config()
 
+        version_label = self.config["settings"].get("system_version", get_default_version())
+        WeChat = _load_wechat_class(version_label)
         self.wechat = WeChat(
             path=self.config["settings"]["wechat_path"],
             locale=self.config["settings"]["language"],
@@ -61,6 +70,19 @@ class WechatGUI(QWidget):
         
         # 自动打开提示
         self.show_wechat_open_notice()
+
+    # 根据当前配置重新实例化 self.wechat，并更新 clock 引用
+    def _reinit_wechat(self):
+        version_label = self.config["settings"].get("system_version", get_default_version())
+        WeChat = _load_wechat_class(version_label)
+        self.wechat = WeChat(
+            path=self.config["settings"]["wechat_path"],
+            locale=self.config["settings"]["language"],
+        )
+        self.wechat.search_wait = self.config["settings"].get("search_wait", 0.3)
+        # prevent_func 持有的是绑定方法引用，版本切换后必须重新绑定
+        if hasattr(self, "clock"):
+            self.clock.prevent_func = self.wechat.prevent_offline
 
     # 显示微信打开方式变更提示
     def show_wechat_open_notice(self):
@@ -547,6 +569,28 @@ class WechatGUI(QWidget):
 
         return hbox
 
+    # 提供选择微信版本的下拉框
+    def init_version_choose(self):
+        def switch_version(label):
+            self.config["settings"]["system_version"] = label
+            self._reinit_wechat()
+            self.save_config()
+
+        info = QLabel("请选择你的微信版本（如果没有严格匹配，则选择你当前版本附近的版本号）")
+        combo = QComboBox()
+        combo.addItems(get_version_labels())
+
+        saved = self.config["settings"].get("system_version", get_default_version())
+        if saved in VERSIONS:
+            combo.setCurrentText(saved)
+
+        combo.currentTextChanged.connect(switch_version)
+
+        vbox = QVBoxLayout()
+        vbox.addWidget(info)
+        vbox.addWidget(combo)
+        return vbox
+
     # 提供选择微信语言版本的按钮
     def init_language_choose(self):
         def switch_language():
@@ -603,9 +647,12 @@ class WechatGUI(QWidget):
         vbox = QVBoxLayout()
 
         # 关于自动打开微信界面的按钮
-        self.wechat_notice_btn = QPushButton("关于自动打开微信界面", self)
+        self.wechat_notice_btn = QPushButton("关于自动打开微信界面（必看！）", self)
         self.wechat_notice_btn.resize(self.wechat_notice_btn.sizeHint())
         self.wechat_notice_btn.clicked.connect(self.show_wechat_open_notice)
+
+        # 选择微信版本界面
+        version = self.init_version_choose()
 
         # 选择微信语言界面
         lang = self.init_language_choose()
@@ -620,6 +667,7 @@ class WechatGUI(QWidget):
         clock = self.init_clock()
 
         vbox.addWidget(self.wechat_notice_btn)
+        vbox.addLayout(version)
         vbox.addLayout(lang)
         vbox.addLayout(contacts)
         vbox.addStretch(5)
