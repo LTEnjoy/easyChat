@@ -1,4 +1,4 @@
-# easyChat （点击[下载](https://github.com/LTEnjoy/easyChat/releases/latest)最新exe程序，最新版仅支持微信4.1.9.21以上版本）
+# easyChat （点击[下载](https://github.com/LTEnjoy/easyChat/releases/latest)最新exe程序）
 
 PC端微信助手（非web微信版）：定时发送信息；群发信息；自动回复等。直接下载最新的exe即可使用。
 
