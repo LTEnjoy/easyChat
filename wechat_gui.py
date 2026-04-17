@@ -89,13 +89,9 @@ class WechatGUI(QWidget):
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setWindowTitle("重要提示")
-        msg_box.setText("微信打开方式已变更")
+        msg_box.setText("更新说明")
         msg_box.setInformativeText(
-            "由于微信版本更新，我们现在使用微信内置的快捷键来打开/隐藏微信窗口，请确保你的微信打开快捷键为Ctrl+Alt+w。具体查看方式为“设置”->“快捷键”->“显示/隐藏窗口”\n\n"
-            "⚠️ 注意事项：\n"
-            "• 如果微信已经打开且在前台，再次按快捷键会导致微信窗口被隐藏\n"
-            "• 为避免此问题，建议在使用定时发送功能前，先手动关闭或最小化微信窗口\n"
-            "• 这样可以确保程序能够正常打开微信并发送消息\n\n"
+            "2026-04-17：新增多微信版本兼容支持。程序现在可以根据用户在界面中选择的微信版本自动加载对应实现，今后微信更新时不同版本的用户可以各自选择对应版本，无需被迫统一升级。"
         )
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
