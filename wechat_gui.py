@@ -40,6 +40,7 @@ class WechatGUI(QWidget):
                     "search_wait": 0.3,
                     "system_version": "微信 4.1.9.21",
                     "language": "zh-CN",
+                    "wechat_hotkey": "{Ctrl}{Alt}w",
                 },
                 "contacts": [],
                 "messages": [],
@@ -54,6 +55,7 @@ class WechatGUI(QWidget):
             locale=self.config["settings"]["language"],
         )
         self.wechat.search_wait = self.config["settings"].get("search_wait", 0.3)
+        self.wechat.hotkey = self.config["settings"].get("wechat_hotkey", "{Ctrl}{Alt}w")
         self.clock = ClockThread()
         # 连接定时任务错误信号到弹窗函数
         self.clock.error_signal.connect(self.show_clock_error)
@@ -80,6 +82,7 @@ class WechatGUI(QWidget):
             locale=self.config["settings"]["language"],
         )
         self.wechat.search_wait = self.config["settings"].get("search_wait", 0.3)
+        self.wechat.hotkey = self.config["settings"].get("wechat_hotkey", "{Ctrl}{Alt}w")
         # prevent_func 持有的是绑定方法引用，版本切换后必须重新绑定
         if hasattr(self, "clock"):
             self.clock.prevent_func = self.wechat.prevent_offline
@@ -107,7 +110,8 @@ class WechatGUI(QWidget):
         msg_box.setWindowTitle("重要提示")
         msg_box.setText("更新说明")
         msg_box.setInformativeText(
-            "2026-04-17：新增多微信版本兼容支持。程序现在可以根据用户在界面中选择的微信版本自动加载对应实现，今后微信更新时不同版本的用户可以各自选择对应版本，无需被迫统一升级。"
+            "2026-04-19：现在支持手动设置微信打开的热键。\n"
+            "2026-04-17：新增多微信版本兼容支持。程序现在可以根据用户在界面中选择的微信版本自动加载对应实现，今后微信更新时不同版本的用户可以各自选择对应版本，无需被迫统一升级。\n"
         )
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
@@ -658,10 +662,81 @@ class WechatGUI(QWidget):
         # 垂直布局
         vbox = QVBoxLayout()
 
-        # 关于自动打开微信界面的按钮
-        self.wechat_notice_btn = QPushButton("关于自动打开微信界面（必看！）", self)
-        self.wechat_notice_btn.resize(self.wechat_notice_btn.sizeHint())
-        self.wechat_notice_btn.clicked.connect(self.show_wechat_open_notice)
+        # 微信启动快捷键显示和修改
+        hotkey_widget = QWidget()
+        hotkey_layout = QHBoxLayout()
+        hotkey_info_label = QLabel(f"当前微信启动快捷键: {self.config['settings'].get('wechat_hotkey', '{Ctrl}{Alt}w')}")
+        self.hotkey_info_label = hotkey_info_label  # 保存引用以便后续更新
+
+        change_hotkey_btn = QPushButton("更改快捷键（内含必看说明！）")
+
+        def open_hotkey_dialog():
+            # 创建自定义对话框
+            dialog = QDialog(self)
+            dialog.setWindowTitle("修改微信启动快捷键")
+            dialog.setMinimumWidth(500)
+
+            layout = QVBoxLayout()
+
+            # 添加说明文本
+            notice_label = QLabel(
+                "⚠️ 重要说明：\n\n"
+                "程序使用微信内置的快捷键来打开/隐藏微信窗口。\n"
+                "请确保下方设置的快捷键与微信中的设置一致。\n\n"
+                "微信快捷键查看方式：\n"
+                "微信 → 设置 → 快捷键 → 显示/隐藏窗口\n\n"
+                "⚠️ 注意事项：\n"
+                "• 如果微信已经打开且在前台，再次按快捷键会导致微信窗口被隐藏\n"
+                "• 为避免此问题，建议在使用定时发送功能前，先手动关闭或最小化微信窗口\n"
+                "• 这样可以确保程序能够正常打开微信并发送消息"
+            )
+            notice_label.setWordWrap(True)
+            layout.addWidget(notice_label)
+
+            # 添加输入框
+            input_layout = QHBoxLayout()
+            input_label = QLabel("快捷键:")
+            input_edit = QLineEdit()
+            current_hotkey = self.config["settings"].get("wechat_hotkey", "{Ctrl}{Alt}w")
+            input_edit.setText(current_hotkey)
+            input_edit.setPlaceholderText("例如: {Ctrl}{Alt}w")
+            input_layout.addWidget(input_label)
+            input_layout.addWidget(input_edit)
+            layout.addLayout(input_layout)
+
+            # 添加按钮
+            button_layout = QHBoxLayout()
+            ok_btn = QPushButton("确定")
+            cancel_btn = QPushButton("取消")
+
+            def on_ok():
+                new_hotkey = input_edit.text().strip()
+                if new_hotkey:
+                    self.config["settings"]["wechat_hotkey"] = new_hotkey
+                    self.wechat.hotkey = new_hotkey
+                    self.save_config()
+                    self.hotkey_info_label.setText(f"当前微信启动快捷键: {new_hotkey}")
+                dialog.accept()
+
+            def on_cancel():
+                dialog.reject()
+
+            ok_btn.clicked.connect(on_ok)
+            cancel_btn.clicked.connect(on_cancel)
+            button_layout.addStretch()
+            button_layout.addWidget(ok_btn)
+            button_layout.addWidget(cancel_btn)
+            layout.addLayout(button_layout)
+
+            dialog.setLayout(layout)
+            dialog.exec_()
+
+        change_hotkey_btn.clicked.connect(open_hotkey_dialog)
+
+        hotkey_layout.addWidget(hotkey_info_label)
+        hotkey_layout.addWidget(change_hotkey_btn)
+        hotkey_layout.addStretch()
+        hotkey_widget.setLayout(hotkey_layout)
 
         # 选择微信版本界面
         version = self.init_version_choose()
@@ -678,7 +753,7 @@ class WechatGUI(QWidget):
         # 定时界面
         clock = self.init_clock()
 
-        vbox.addWidget(self.wechat_notice_btn)
+        vbox.addWidget(hotkey_widget)
         vbox.addLayout(version)
         vbox.addLayout(lang)
         vbox.addLayout(contacts)

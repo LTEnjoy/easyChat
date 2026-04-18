@@ -63,9 +63,12 @@ class WeChat:
         
         assert locale in WeChatLocale.getSupportedLocales()
         self.lc = WeChatLocale(locale)
-        
+
         # 搜索联系人后等待对话框弹出的时间（秒），可由GUI动态修改
         self.search_wait = 0.3
+
+        # 微信启动快捷键，可由GUI动态修改
+        self.hotkey = "{Ctrl}{Alt}w"
     
     # 检查微信窗口是否可见
     def is_wechat_visible(self):
@@ -96,7 +99,7 @@ class WeChat:
             return
         
         # 如果窗口不可见，通过按下微信打开窗口的全局快捷键来打开微信窗口
-        auto.SendKeys("{Ctrl}{Alt}w")
+        auto.SendKeys(self.hotkey)
     
     # 搜寻微信客户端控件
     def get_wechat(self):
@@ -236,7 +239,7 @@ class WeChat:
         
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
-        contacts_menu = auto.ListItemControl(Depth=14, foundIndex=1)
+        contacts_menu = auto.ListItemControl(Depth=13, foundIndex=1)
         click(contacts_menu)
         
         # 将鼠标移动到联系人上以便可以通过鼠标滚轮往下滑动
@@ -282,7 +285,7 @@ class WeChat:
         
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
-        contacts_menu = auto.ListItemControl(Depth=14, foundIndex=1)
+        contacts_menu = auto.ListItemControl(Depth=13, foundIndex=1)
         click(contacts_menu)
         
         # 点击最近群聊
@@ -599,10 +602,10 @@ if __name__ == '__main__':
     # wechat.get_contact("斗地主")
     
     # 发送文本信息
-    name = "ltenjoy"
-    # at_names = ["fan", "wen", "所有人"]
-    text = "去不去吃饭"
-    wechat.send_msg(name, [], text)
+    # name = "ltenjoy"
+    # # at_names = ["fan", "wen", "所有人"]
+    # text = "去不去吃饭"
+    # wechat.send_msg(name, [], text)
     
     # 发送文本信息到群聊
     # name = "斗地主"
@@ -615,7 +618,7 @@ if __name__ == '__main__':
     # wechat.send_file(name, file_path)
     
     # 获取群聊列表
-    # groups = wechat.find_all_groups()
-    
+    groups = wechat.find_all_groups()
+
     # 获取好友列表
     # contacts = wechat.find_all_contacts()
