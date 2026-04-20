@@ -63,10 +63,10 @@ class WeChat:
         
         assert locale in WeChatLocale.getSupportedLocales()
         self.lc = WeChatLocale(locale)
-
+        
         # 搜索联系人后等待对话框弹出的时间（秒），可由GUI动态修改
         self.search_wait = 0.3
-
+        
         # 微信启动快捷键，可由GUI动态修改
         self.hotkey = "{Ctrl}{Alt}w"
     
@@ -128,7 +128,7 @@ class WeChat:
         chat_interface = auto.ButtonControl(Depth=6, Name=self.lc.weixin)
         click(chat_interface)
         
-        search_box = auto.EditControl(Depth=14, Name=self.lc.search)
+        search_box = auto.EditControl(Depth=15, Name=self.lc.search)
         click(search_box)
     
     # 防止微信长时间挂机导致掉线
@@ -161,7 +161,7 @@ class WeChat:
     # 鼠标移动到发送按钮处点击发送消息
     def press_enter(self):
         # 获取发送按钮
-        send_button = auto.ButtonControl(Depth=21, Name=self.lc.send)
+        send_button = auto.ButtonControl(Depth=20, Name=self.lc.send)
         click(send_button)
     
     def paste_text(self, text: str) -> None:
@@ -239,7 +239,7 @@ class WeChat:
         
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
-        contacts_menu = auto.ListItemControl(Depth=13, foundIndex=1)
+        contacts_menu = auto.ListItemControl(Depth=14, foundIndex=1)
         click(contacts_menu)
         
         # 将鼠标移动到联系人上以便可以通过鼠标滚轮往下滑动
@@ -285,7 +285,7 @@ class WeChat:
         
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
-        contacts_menu = auto.ListItemControl(Depth=13, foundIndex=1)
+        contacts_menu = auto.ListItemControl(Depth=14, foundIndex=1)
         click(contacts_menu)
         
         # 点击最近群聊
@@ -618,7 +618,7 @@ if __name__ == '__main__':
     # wechat.send_file(name, file_path)
     
     # 获取群聊列表
-    groups = wechat.find_all_groups()
-
+    # groups = wechat.find_all_groups()
+    
     # 获取好友列表
-    # contacts = wechat.find_all_contacts()
+    contacts = wechat.find_all_contacts()

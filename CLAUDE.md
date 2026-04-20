@@ -8,9 +8,7 @@ EasyChat is a Windows-only PC WeChat automation assistant that uses UI automatio
 
 **Multi-version support**: As of 2026/04/17, the project supports multiple WeChat versions through a plugin-like architecture. Each WeChat version has its own implementation module in the `versions/` directory.
 
-**Current supported versions**: 4.1.9.21 (default). Earlier versions (3.9, 4.0) are no longer supported.
-
-**CRITICAL BUG**: The `versions/__init__.py` file is missing, which breaks the application. This file must define `VERSIONS` (dict mapping version labels to module paths), `get_version_labels()`, and `get_default_version()` functions.
+**Current supported versions**: 4.1.9.21 (default), 4.1.8.107. Earlier versions (3.9, 4.0) are no longer supported.
 
 **Unimplemented methods**: `check_new_msg()`, `get_dialogs()`, `save_dialog_pictures()`, and `get_dialogs_by_time_blocks()` raise `NotImplementedError` — they have not been adapted to WeChat 4.1+.
 
@@ -24,7 +22,7 @@ EasyChat is a Windows-only PC WeChat automation assistant that uses UI automatio
 # Setup
 pip install -r requirements.txt   # requirements.txt is UTF-16 encoded; pip handles it fine
 
-# Run GUI (currently broken - see CRITICAL BUG above)
+# Run GUI
 python wechat_gui.py
 
 # Build standalone .exe (output: dist/wechat_gui.exe)
@@ -48,8 +46,9 @@ wechat_gui.py        ← PyQt5 UI, config persistence, hotkey handling, version 
     ├── module.py    ← ClockThread (scheduler), custom widgets
     │
     └── versions/    ← Version-specific WeChat automation implementations
-        ├── __init__.py           ← MISSING: Version registry (VERSIONS dict, helper functions)
-        └── wechat_4_1_9_21.py   ← WeChat 4.1.9.21 automation engine
+        ├── __init__.py           ← Version registry (VERSIONS dict, helper functions)
+        ├── wechat_4_1_9_21.py   ← WeChat 4.1.9.21 automation engine
+        └── wechat_4_1_8_107.py  ← WeChat 4.1.8.107 automation engine
             │
             ├── wechat_locale.py  ← Localized UI element names
             └── clipboard.py      ← File clipboard operations (win32)
@@ -59,7 +58,7 @@ wechat_gui.py        ← PyQt5 UI, config persistence, hotkey handling, version 
 
 The project now supports multiple WeChat versions through dynamic module loading:
 
-1. **Version registry** (`versions/__init__.py` - MISSING): Defines `VERSIONS` dict mapping user-friendly labels (e.g., "微信 4.1.9.21") to module paths (e.g., "versions.wechat_4_1_9_21").
+1. **Version registry** (`versions/__init__.py`): Defines `VERSIONS` dict mapping user-friendly labels (e.g., "微信 4.1.9.21") to module paths (e.g., "versions.wechat_4_1_9_21"). New versions are registered here; list newest first so `get_default_version()` returns the latest.
 
 2. **Version loader** (`wechat_gui.py:_load_wechat_class()`): Uses `importlib` to dynamically import the `WeChat` class from the selected version module.
 
@@ -130,22 +129,17 @@ Custom widgets: `MyListWidget` (double-click to edit), `MySpinBox`, `MyDoubleSpi
 
 ## Common Pitfalls
 
-1. **MISSING `versions/__init__.py`**: The application currently cannot run because this file is missing. It must define:
-   - `VERSIONS`: dict mapping version labels to module paths (e.g., `{"微信 4.1.9.21": "versions.wechat_4_1_9_21"}`)
-   - `get_version_labels()`: returns list of available version labels
-   - `get_default_version()`: returns the default version label
+1. **WeChat UI updates break hardcoded depths**: Re-run `automation.py` on the live WeChat window to find new control depths after any WeChat update. Each version module has its own hardcoded depths.
 
-2. **WeChat UI updates break hardcoded depths**: Re-run `automation.py` on the live WeChat window to find new control depths after any WeChat update. Each version module has its own hardcoded depths.
+2. **Do not touch WeChat launch logic**: The Ctrl+Alt+W approach (not spawning `Weixin.exe`) is a deliberate workaround for the new-login popup introduced in 2026/03/09.
 
-3. **Do not touch WeChat launch logic**: The Ctrl+Alt+W approach (not spawning `Weixin.exe`) is a deliberate workaround for the new-login popup introduced in 2026/03/09.
+3. **Clipboard timing**: The 0.3s sleeps after `pyperclip.copy()` and `setClipboardFiles()` are load-bearing. Don't remove them.
 
-4. **Clipboard timing**: The 0.3s sleeps after `pyperclip.copy()` and `setClipboardFiles()` are load-bearing. Don't remove them.
+4. **`NotImplementedError` methods**: Calling `check_new_msg()`, `get_dialogs()`, `save_dialog_pictures()`, or `get_dialogs_by_time_blocks()` will raise immediately — they are not stubs with silent fallbacks.
 
-5. **`NotImplementedError` methods**: Calling `check_new_msg()`, `get_dialogs()`, `save_dialog_pictures()`, or `get_dialogs_by_time_blocks()` will raise immediately — they are not stubs with silent fallbacks.
+5. **Backup files**: `ui_auto_wechat-4.0备份.py`, `gui_cp.py`, `module_cp.py` are historical backups, not active code. The original `ui_auto_wechat.py` was moved to `versions/wechat_4_1_9_21.py` in commit 2ba08a4.
 
-6. **Backup files**: `ui_auto_wechat-4.0备份.py`, `gui_cp.py`, `module_cp.py` are historical backups, not active code. The original `ui_auto_wechat.py` was moved to `versions/wechat_4_1_9_21.py` in commit 2ba08a4.
-
-7. **PyInstaller data files**: When building the .exe, the `versions/` directory must be included with `--add-data "versions;versions"` (see `pack.py`).
+6. **PyInstaller data files**: When building the .exe, the `versions/` directory must be included with `--add-data "versions;versions"` (see `pack.py`).
 
 ## Code Conventions
 
