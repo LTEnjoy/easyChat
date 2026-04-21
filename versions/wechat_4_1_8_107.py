@@ -91,27 +91,14 @@ class WeChat:
     
     # 打开微信客户端
     def open_wechat(self):
-        # 先检查微信窗口是否已经可见
-        if self.is_wechat_visible():
-            # 如果已经可见，只需要激活窗口到前台
-            wechat_window = self.get_wechat()
-            wechat_window.SetFocus()
-            return
-        
-        # 如果窗口不可见，通过按下微信打开窗口的全局快捷键来打开微信窗口
+        auto.SendKeys("{Esc}")
         auto.SendKeys(self.hotkey)
-    
-    # 搜寻微信客户端控件
-    def get_wechat(self):
-        return auto.WindowControl(Depth=1, Name=self.lc.weixin)
     
     # 获取当前聊天对象的昵称
     def get_current_name(self):
         # 打开微信，获取根窗口并通过点击获取焦点
         self.open_wechat()
-        root = self.get_wechat()
-        click(root)
-        
+
         # 等待焦点锁定在微信窗口
         time.sleep(1)
         
@@ -122,7 +109,6 @@ class WeChat:
     # 打开微信并将焦点定位到搜索框（公共逻辑，防止深度值散落多处）
     def _focus_search_box(self):
         self.open_wechat()
-        self.get_wechat()
         
         # 搜索框在不同的界面上深度不同（例如聊天界面和通讯录界面），因此统一先切换到聊天界面
         chat_interface = auto.ButtonControl(Depth=6, Name=self.lc.weixin)
@@ -235,7 +221,6 @@ class WeChat:
     # 获取所有通讯录中所有联系人
     def find_all_contacts(self) -> pd.DataFrame:
         self.open_wechat()
-        self.get_wechat()
         
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
@@ -281,7 +266,6 @@ class WeChat:
     # 获取所有群聊
     def find_all_groups(self) -> list:
         self.open_wechat()
-        self.get_wechat()
         
         # 获取通讯录管理界面
         click(auto.ButtonControl(Name=self.lc.contacts))
@@ -325,7 +309,6 @@ class WeChat:
         raise NotImplementedError("该方法尚未适配新版微信")
         
         self.open_wechat()
-        self.get_wechat()
         
         # 获取左侧聊天按钮
         chat_btn = auto.ButtonControl(Name=self.lc.chats)
