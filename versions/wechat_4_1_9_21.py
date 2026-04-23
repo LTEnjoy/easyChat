@@ -93,7 +93,7 @@ class WeChat:
         self.open_wechat()
         
         # 搜索框在不同的界面上深度不同（例如聊天界面和通讯录界面），因此统一先切换到聊天界面
-        chat_interface = auto.ButtonControl(Depth=6, Name=self.lc.weixin)
+        chat_interface = auto.ButtonControl(Depth=6, ClassName="mmui::XTabBarItem")
         click(chat_interface)
         
         search_box = auto.EditControl(Depth=14, Name=self.lc.search)
@@ -586,4 +586,6 @@ if __name__ == '__main__':
     # groups = wechat.find_all_groups()
 
     # 获取好友列表
-    contacts = wechat.find_all_contacts()
+    # contacts = wechat.find_all_contacts()
+    
+    wechat._focus_search_box()
