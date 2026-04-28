@@ -284,7 +284,7 @@ class WeChat:
                 groups.add(name)
         
         # 模拟鼠标下滑一直读取群聊列表直到无法下滑为止
-        num_trial = 3
+        num_trial = 10
         while num_trial > 0:
             ori_len = len(groups)
             
@@ -299,7 +299,7 @@ class WeChat:
                 num_trial -= 1
             # 如果有新增群聊则重置尝试次数
             else:
-                num_trial = 3
+                num_trial = 10
         
         # 返回群聊列表
         return list(groups)
@@ -601,7 +601,7 @@ if __name__ == '__main__':
     # wechat.send_file(name, file_path)
     
     # 获取群聊列表
-    # groups = wechat.find_all_groups()
+    groups = wechat.find_all_groups()
     
     # 获取好友列表
     contacts = wechat.find_all_contacts()

@@ -38,7 +38,7 @@ class WechatGUI(QWidget):
                     "wechat_path": "",
                     "send_interval": 0,
                     "search_wait": 0.3,
-                    "system_version": "微信 4.1.9.21",
+                    "system_version": get_default_version(),
                     "language": "zh-CN",
                     "wechat_hotkey": "{Ctrl}{Alt}w",
                 },
