@@ -92,6 +92,8 @@ class WeChat:
     # 打开微信客户端
     def open_wechat(self):
         auto.SendKeys("{Esc}")
+        # 等待一小段时间以确保微信窗口已经关闭（如果已经打开的话）
+        time.sleep(0.5)
         auto.SendKeys(self.hotkey)
     
     # 获取当前聊天对象的昵称
