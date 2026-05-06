@@ -76,6 +76,12 @@ class WeChat:
     # 打开微信客户端
     def open_wechat(self):
         # 经验判断:微信的控件ClassName都以mmui开头
+
+        # 先检查当前焦点是否已经在微信窗口上，如果是则直接返回
+        now = auto.GetFocusedControl()
+        if now.ClassName.startswith("mmui"):
+            return
+
         num_trials = 5
         success = False
         
