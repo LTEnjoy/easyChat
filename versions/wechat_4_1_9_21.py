@@ -1,5 +1,7 @@
 import time
 import uiautomation as auto
+auto.SetGlobalSearchTimeout(1.0)
+
 import subprocess
 import numpy as np
 import pandas as pd
@@ -73,10 +75,20 @@ class WeChat:
     
     # 打开微信客户端
     def open_wechat(self):
-        auto.SendKeys("{Esc}")
-        # 等待一小段时间以确保微信窗口已经关闭（如果已经打开的话）
-        time.sleep(0.5)
-        auto.SendKeys(self.hotkey)
+        # 经验判断:微信的控件ClassName都以mmui开头
+        num_trials = 5
+        success = False
+        
+        for _ in range(num_trials):
+            auto.SendKeys(self.hotkey)
+            now = auto.GetFocusedControl()
+            if now.ClassName.startswith("mmui"):
+                success = True
+                break
+        
+        if not success:
+            raise RuntimeError("无法打开微信窗口，请检查微信是否已经打开，或者快捷键设置是否正确")
+        
     
     # 获取当前聊天对象的昵称
     def get_current_name(self):
@@ -97,7 +109,7 @@ class WeChat:
         # 搜索框在不同的界面上深度不同（例如聊天界面和通讯录界面），因此统一先切换到聊天界面
         chat_interface = auto.ButtonControl(Depth=6, ClassName="mmui::XTabBarItem")
         click(chat_interface)
-        
+
         search_box = auto.EditControl(Depth=14, Name=self.lc.search)
         click(search_box)
     
@@ -590,4 +602,5 @@ if __name__ == '__main__':
     # 获取好友列表
     # contacts = wechat.find_all_contacts()
     
-    wechat._focus_search_box()
+    wechat.open_wechat()
+    # wechat._focus_search_box()

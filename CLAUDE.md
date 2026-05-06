@@ -26,8 +26,9 @@ pip install -r requirements.txt   # requirements.txt is UTF-16 encoded; pip hand
 python wechat_gui.py
 
 # Build standalone .exe (output: dist/wechat_gui.exe)
+# Note: pack.py contains hardcoded paths; run from the project root
 python pack.py
-# Equivalent to: pyinstaller.exe -Fw --noupx --add-data "versions;versions" wechat_gui.py
+# Internally uses: pyinstaller.exe -Fw --noupx --collect-submodules versions wechat_gui.py
 
 # Inspect WeChat's live UI control tree (use when WeChat updates break automation)
 python automation.py [-t delay] [-d depth] [-r root] [-c cursor]
@@ -45,13 +46,14 @@ wechat_gui.py        ← PyQt5 UI, config persistence, hotkey handling, version 
     │
     ├── module.py    ← ClockThread (scheduler), custom widgets
     │
+    ├── wechat_locale.py  ← Localized UI element names (shared utility)
+    │
+    ├── clipboard.py      ← File clipboard operations (shared utility)
+    │
     └── versions/    ← Version-specific WeChat automation implementations
         ├── __init__.py           ← Version registry (VERSIONS dict, helper functions)
         ├── wechat_4_1_9_21.py   ← WeChat 4.1.9.21 automation engine
         └── wechat_4_1_8_107.py  ← WeChat 4.1.8.107 automation engine
-            │
-            ├── wechat_locale.py  ← Localized UI element names
-            └── clipboard.py      ← File clipboard operations (win32)
 ```
 
 ### Multi-Version Architecture (2026/04/17)

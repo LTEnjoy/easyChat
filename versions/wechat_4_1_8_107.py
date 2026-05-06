@@ -70,31 +70,21 @@ class WeChat:
         # 微信启动快捷键，可由GUI动态修改
         self.hotkey = "{Ctrl}{Alt}w"
     
-    # 检查微信窗口是否可见
-    def is_wechat_visible(self):
-        try:
-            wechat_window = auto.WindowControl(Depth=1, Name=self.lc.weixin, searchDepth=1)
-            # 检查窗口是否存在且可见（非最小化）
-            if wechat_window.Exists(0, 0):
-                # 获取窗口句柄
-                hwnd = wechat_window.NativeWindowHandle
-                # 使用 Windows API 检查窗口是否可见且未最小化
-                # IsWindowVisible 检查窗口是否可见
-                # IsIconic 检查窗口是否最小化
-                user32 = windll.user32
-                is_visible = user32.IsWindowVisible(hwnd)
-                is_minimized = user32.IsIconic(hwnd)
-                return is_visible and not is_minimized
-            return False
-        except:
-            return False
-    
     # 打开微信客户端
     def open_wechat(self):
-        auto.SendKeys("{Esc}")
-        # 等待一小段时间以确保微信窗口已经关闭（如果已经打开的话）
-        time.sleep(0.5)
-        auto.SendKeys(self.hotkey)
+        # 经验判断:微信的控件ClassName都以mmui开头
+        num_trials = 5
+        success = False
+        
+        for _ in range(num_trials):
+            auto.SendKeys(self.hotkey)
+            now = auto.GetFocusedControl()
+            if now.ClassName.startswith("mmui"):
+                success = True
+                break
+        
+        if not success:
+            raise RuntimeError("无法打开微信窗口，请检查微信是否已经打开，或者快捷键设置是否正确")
     
     # 获取当前聊天对象的昵称
     def get_current_name(self):
