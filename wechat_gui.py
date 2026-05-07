@@ -103,15 +103,13 @@ class WechatGUI(QWidget):
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
     
-    # 显示微信打开方式变更提示
     def show_wechat_update_notice(self):
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setWindowTitle("重要提示")
-        msg_box.setText("更新说明")
+        msg_box.setText("使用说明")
         msg_box.setInformativeText(
-            "2026-04-19：现在支持手动设置微信打开的热键。\n"
-            "2026-04-17：新增多微信版本兼容支持。程序现在可以根据用户在界面中选择的微信版本自动加载对应实现，今后微信更新时不同版本的用户可以各自选择对应版本，无需被迫统一升级。\n"
+            "为了确保程序能正常运行,请务必先打开电脑的讲述人模式，然后重启微信.在确认程序可以运行后，关闭讲述人模式即可.\n"
         )
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
