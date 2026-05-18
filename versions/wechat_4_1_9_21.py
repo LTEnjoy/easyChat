@@ -141,10 +141,10 @@ class WeChat:
                 click(item)
                 break
         
-        # 点击发送内容输入框来获取输入焦点 (4.1.8之后的版本不需要)
-        # tool_bar = auto.ToolBarControl(Depth=15)
-        # move(tool_bar)
-        # click(tool_bar)
+        # 点击发送内容输入框来获取输入焦点 (对于被折叠的群聊需要这一步)
+        tool_bar = auto.ToolBarControl(Depth=18)
+        move(tool_bar)
+        click(tool_bar)
     
     # 鼠标移动到发送按钮处点击发送消息
     def press_enter(self):
@@ -583,8 +583,9 @@ if __name__ == '__main__':
     
     # 单元测试
     # print(wechat.get_current_name())
-    
-    # wechat.get_contact("斗地主")
+
+    wechat.hotkey = "{Ctrl}{Alt}e"
+    wechat.get_contact("斗地主")
     
     # 发送文本信息
     # name = "ltenjoy"
@@ -608,5 +609,5 @@ if __name__ == '__main__':
     # 获取好友列表
     # contacts = wechat.find_all_contacts()
     
-    wechat.open_wechat()
+    # wechat.open_wechat()
     # wechat._focus_search_box()
