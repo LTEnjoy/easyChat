@@ -243,7 +243,7 @@ class WeChat:
                 contact_set.add(name)
         
         # 模拟鼠标下滑一直读取群聊列表直到无法下滑为止
-        num_trial = 3
+        num_trial = 10
         while num_trial > 0:
             ori_len = len(contact_set)
             
@@ -260,7 +260,7 @@ class WeChat:
                 num_trial -= 1
             # 如果有新增群聊则重置尝试次数
             else:
-                num_trial = 3
+                num_trial = 10
                 pass
         
         return contacts
