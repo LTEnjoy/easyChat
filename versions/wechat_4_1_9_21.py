@@ -245,23 +245,29 @@ class WeChat:
         # 模拟鼠标下滑一直读取群聊列表直到无法下滑为止
         num_trial = 10
         while num_trial > 0:
-            ori_len = len(contact_set)
-            
-            wheel_down()
-            for contact in auto.ListControl(Depth=7).GetChildren():
-                # 获取用户的昵称备注以及标签。注意这种方式没有办法准确获取昵称和备注，因为微信自身的信息组织问题。
-                name, note, label = contact.Name.rsplit(" ", maxsplit=2)
-                if name not in contact_set:
-                    contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
-                    contact_set.add(name)
-            
-            # 如果没有新增群聊则减少尝试次数，尝试3次后退出
-            if len(contact_set) == ori_len:
-                num_trial -= 1
-            # 如果有新增群聊则重置尝试次数
-            else:
-                num_trial = 10
+            try:
+                ori_len = len(contact_set)
+
+                wheel_down()
+                for contact in auto.ListControl(Depth=7).GetChildren():
+                    # 获取用户的昵称备注以及标签。注意这种方式没有办法准确获取昵称和备注，因为微信自身的信息组织问题。
+                    name, note, label = contact.Name.rsplit(" ", maxsplit=2)
+                    if name not in contact_set:
+                        contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
+                        contact_set.add(name)
+
+                # 如果没有新增群聊则减少尝试次数，尝试3次后退出
+                if len(contact_set) == ori_len:
+                    num_trial -= 1
+                # 如果有新增群聊则重置尝试次数
+                else:
+                    num_trial = 10
+                    pass
+
+            except Exception as e:
+                print(e)
                 pass
+
         
         return contacts
     
@@ -288,20 +294,24 @@ class WeChat:
         # 模拟鼠标下滑一直读取群聊列表直到无法下滑为止
         num_trial = 10
         while num_trial > 0:
-            ori_len = len(groups)
-            
-            wheel_down()
-            for i, group in enumerate(auto.ListControl(Depth=5).GetChildren()):
-                if i >= 5:
-                    name = group.Name.split("(")[0]
-                    groups.add(name)
-            
-            # 如果没有新增群聊则减少尝试次数，尝试3次后退出
-            if len(groups) == ori_len:
-                num_trial -= 1
-            # 如果有新增群聊则重置尝试次数
-            else:
-                num_trial = 10
+            try:
+                ori_len = len(groups)
+
+                wheel_down()
+                for i, group in enumerate(auto.ListControl(Depth=5).GetChildren()):
+                    if i >= 5:
+                        name = group.Name.split("(")[0]
+                        groups.add(name)
+
+                # 如果没有新增群聊则减少尝试次数，尝试3次后退出
+                if len(groups) == ori_len:
+                    num_trial -= 1
+                # 如果有新增群聊则重置尝试次数
+                else:
+                    num_trial = 10
+
+            except Exception as e:
+                print(e)
         
         # 返回群聊列表
         return list(groups)
