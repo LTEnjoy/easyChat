@@ -110,6 +110,7 @@ class WechatGUI(QWidget):
         msg_box.setText("使用说明")
         msg_box.setInformativeText(
             "为了确保程序能正常运行,请务必先打开电脑的讲述人模式，然后重启微信.在确认程序可以运行后，关闭讲述人模式即可.\n"
+            "注意，判断讲述人模式是否起效可以尝试点击微信内部的各个按钮，查看讲述人模式的方框是否能够在内部显示，如果可以则说明起效了。"
         )
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
@@ -492,7 +493,11 @@ class WechatGUI(QWidget):
                                 # 分出at的人和发送的文本内容
                                 at_names, text = content.split(":", 1)
                                 at_names = at_names.split(",")
-                                self.wechat.send_msg(name, at_names, text, search_user)
+                                result = self.wechat.send_msg(name, at_names, text, search_user)
+                                if not result and search_user:
+                                    # 联系人未找到，跳过该联系人的所有消息
+                                    print(f"跳过无效联系人: {name}")
+                                    break
 
                             # 判断为文件内容
                             elif type == "file":

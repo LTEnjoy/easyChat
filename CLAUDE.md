@@ -16,6 +16,8 @@ EasyChat is a Windows-only PC WeChat automation assistant that uses UI automatio
 
 **CRITICAL**: Windows Narrator (讲述人) must be enabled for `uiautomation` to detect WeChat UI controls. This is the #1 cause of runtime failures.
 
+**WeChat hotkey**: The default hotkey to open WeChat is `Ctrl+Alt+W`. Users can configure a custom hotkey in the GUI settings (added 2026/04/19). The hotkey is stored in `wechat_config.json` and used by the automation engine to open WeChat without triggering the login popup.
+
 ## Development Commands
 
 ```bash
@@ -76,6 +78,7 @@ The `WeChat` class wraps `uiautomation` to control WeChat's desktop UI. Key desi
 - **All text input uses clipboard paste** (`pyperclip` → Ctrl+V) instead of direct typing, for reliability. The 0.3s delays after clipboard operations are critical — removing them causes paste failures.
 - **WeChat is opened via Ctrl+Alt+W** (not by launching the `.exe` directly). This avoids triggering the new login popup (2026/03/09 fix). Do not change the startup logic without understanding this workaround.
 - **Contact search skips `XTableCell` items** to avoid selecting groups instead of contacts (2025/12/02 fix). `search_wait` (default 0.3s, configurable in settings) controls how long to wait for search results.
+- **Folded group chats** (折叠群聊) are now supported as of 2026/05/18. Previously, messages couldn't be sent to folded group chats.
 - `find_all_contacts()` returns a pandas DataFrame. It uses `rsplit(" ", maxsplit=2)` to parse contact info, which fails if names or notes contain spaces.
 
 ### wechat_gui.py — GUI & Orchestration
@@ -98,7 +101,7 @@ Config structure:
 }
 ```
 
-**Interrupt hotkey**: `Ctrl+Alt+Q` sets `hotkey_pressed = True` via the `keyboard` library global hook. Sending loops should check this flag to stop mid-process.
+**Interrupt hotkey**: `Ctrl+Alt+Q` sets `hotkey_pressed = True` via the `keyboard` library global hook. Sending loops should check this flag to stop mid-process. The hotkey is registered in `wechat_gui.py` using `keyboard.add_hotkey()` and remains active throughout the application lifecycle.
 
 ### module.py — ClockThread & Widgets
 
@@ -112,7 +115,9 @@ Custom widgets: `MyListWidget` (double-click to edit), `MySpinBox`, `MyDoubleSpi
 
 ### clipboard.py — File Clipboard
 
-`setClipboardFiles(paths)` uses the Windows `win32clipboard` API with a DROPFILES structure to stage files for Ctrl+V sending. **Known bug**: line 22 references undefined variable `matedata` (should be `metadata`).
+`setClipboardFiles(paths)` uses the Windows `win32clipboard` API with a DROPFILES structure to stage files for Ctrl+V sending. 
+
+**Known bug**: Line 22 references undefined variable `matedata` (should be `metadata`). This will cause a `NameError` if the code path is reached. To fix: change `matedata` to `metadata` on line 22.
 
 ## Data Formats
 
@@ -133,7 +138,7 @@ Custom widgets: `MyListWidget` (double-click to edit), `MySpinBox`, `MyDoubleSpi
 
 1. **WeChat UI updates break hardcoded depths**: Re-run `automation.py` on the live WeChat window to find new control depths after any WeChat update. Each version module has its own hardcoded depths.
 
-2. **Do not touch WeChat launch logic**: The Ctrl+Alt+W approach (not spawning `Weixin.exe`) is a deliberate workaround for the new-login popup introduced in 2026/03/09.
+2. **Do not touch WeChat launch logic**: The Ctrl+Alt+W approach (not spawning `Weixin.exe`) is a deliberate workaround for the new-login popup introduced in 2026/03/09. The hotkey is configurable in GUI settings but must be set before WeChat is opened.
 
 3. **Clipboard timing**: The 0.3s sleeps after `pyperclip.copy()` and `setClipboardFiles()` are load-bearing. Don't remove them.
 
@@ -141,7 +146,9 @@ Custom widgets: `MyListWidget` (double-click to edit), `MySpinBox`, `MyDoubleSpi
 
 5. **Backup files**: `ui_auto_wechat-4.0备份.py`, `gui_cp.py`, `module_cp.py` are historical backups, not active code. The original `ui_auto_wechat.py` was moved to `versions/wechat_4_1_9_21.py` in commit 2ba08a4.
 
-6. **PyInstaller data files**: When building the .exe, the `versions/` directory must be included with `--add-data "versions;versions"` (see `pack.py`).
+6. **PyInstaller data files**: When building the .exe, the `versions/` directory must be included with `--collect-submodules versions` (see `pack.py`). The pack.py script contains hardcoded absolute paths and must be run from the project root.
+
+7. **requirements.txt encoding**: The file is UTF-16 encoded (visible as spaced characters when viewed). pip handles this automatically, but text editors may display it incorrectly. Don't "fix" the encoding unless you understand the implications.
 
 ## Code Conventions
 

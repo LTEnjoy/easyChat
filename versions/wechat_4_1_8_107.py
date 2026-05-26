@@ -120,27 +120,26 @@ class WeChat:
         self._focus_search_box()
     
     # 搜索指定用户
-    def get_contact(self, name):
+    def get_contact(self, name) -> bool:
         self._focus_search_box()
-        
+
         pyperclip.copy(name)
         auto.SendKeys("{Ctrl}v")
-        
+
         # 等待客户端搜索联系人
         time.sleep(self.search_wait)
-        
+
         # 现在群聊不会出现在搜索的第一行，需要手动选择
         list_control = auto.ListControl(Depth=4)
+        found = False
         for item in list_control.GetChildren():
             # 联系人项的 ClassName 不包含 "XTableCell"，默认选择第一个联系人，点击进入窗口
             if "XTableCell" not in item.ClassName:
                 click(item)
+                found = True
                 break
-        
-        # 点击发送内容输入框来获取输入焦点 (4.1.8之后的版本不需要)
-        # tool_bar = auto.ToolBarControl(Depth=15)
-        # move(tool_bar)
-        # click(tool_bar)
+
+        return found
     
     # 鼠标移动到发送按钮处点击发送消息
     def press_enter(self):
@@ -169,7 +168,9 @@ class WeChat:
             search_user: 是否需要搜索群聊
         """
         if search_user:
-            self.get_contact(name)
+            if not self.get_contact(name):
+                # 联系人未找到，跳过发送
+                return False
         
         if at_names is not None:
             # @所有列表中的人名
@@ -188,17 +189,8 @@ class WeChat:
             self.paste_text(text)
         
         self.press_enter()
-        
-        # 发送消息后马上获取聊天记录，判断是否发送成功
-        try:
-            if self.get_dialogs(name, 1, False)[0][2] == text:
-                return True
-            else:
-                return False
-        
-        except Exception:
-            return False
-    
+        return True
+
     # 搜索指定用户名的联系人发送文件
     def send_file(self, name: str, path: str, search_user: bool = True) -> None:
         """
