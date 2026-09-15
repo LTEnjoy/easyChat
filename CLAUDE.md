@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-EasyChat is a Windows-only PC WeChat automation assistant that uses UI automation to control the WeChat desktop client. It provides scheduled messaging, bulk messaging, and contact extraction through a PyQt5 GUI. The project uses `uiautomation` to interact with WeChat's UI controls since web WeChat is no longer available.
+EasyChat is a **Windows-only** PC WeChat automation assistant (uses `uiautomation` to control the desktop client UI) that uses UI automation to control the WeChat desktop client. It provides scheduled messaging, bulk messaging, and contact extraction through a PyQt5 GUI. The project uses `uiautomation` to interact with WeChat's UI controls since web WeChat is no longer available.
 
 **Multi-version support**: As of 2026/04/17, the project supports multiple WeChat versions through a plugin-like architecture. Each WeChat version has its own implementation module in the `versions/` directory.
 
@@ -107,9 +107,9 @@ Config structure:
 
 ### module.py — ClockThread & Widgets
 
-`ClockThread(QThread)` polls every second and fires scheduled tasks within a 60-second execution window (prevents duplicate fires). It also drives the anti-auto-logout feature (triggers every 60 minutes). It emits `error_signal` when a scheduled task fails.
+`ClockThread(QThread)` polls every second and fires scheduled tasks within a 60-second execution window (prevents duplicate fires via `executed_tasks` tracking). It also drives the anti-auto-logout feature (triggers every 60 minutes, configurable via `prevent_count`). It emits `error_signal` when a scheduled task fails.
 
-Custom widgets: `MyListWidget` (double-click to edit), `MySpinBox`, `MyDoubleSpinBox`, `MultiInputDialog`, `FileDialog`.
+Custom widgets: `MyListWidget` (double-click to edit), `MySpinBox`, `MyDoubleSpinBox`, `MyRangeDoubleSpinBox` (range spinner for `send_interval`/`search_wait`), `MultiInputDialog`, `FileDialog`.
 
 ### wechat_locale.py — Internationalization
 
@@ -140,7 +140,7 @@ Custom widgets: `MyListWidget` (double-click to edit), `MySpinBox`, `MyDoubleSpi
 
 2. **Do not touch WeChat launch logic**: The Ctrl+Alt+W approach (not spawning `Weixin.exe`) is a deliberate workaround for the new-login popup introduced in 2026/03/09. The hotkey is configurable in GUI settings but must be set before WeChat is opened.
 
-3. **Clipboard timing**: The 0.3s sleeps after `pyperclip.copy()` and `setClipboardFiles()` are load-bearing. Don't remove them.
+3. **Clipboard timing (CRITICAL)**: The 0.3s sleeps after `pyperclip.copy()` and `setClipboardFiles()` are **load-bearing**. Removing them causes paste failures — the clipboard needs time to settle before Ctrl+V is simulated.
 
 4. **`NotImplementedError` methods**: Calling `check_new_msg()`, `get_dialogs()`, `save_dialog_pictures()`, or `get_dialogs_by_time_blocks()` will raise immediately — they are not stubs with silent fallbacks.
 

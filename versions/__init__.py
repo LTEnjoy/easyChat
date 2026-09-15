@@ -4,6 +4,7 @@
 VERSIONS = {
     "微信 4.1.9.21": "versions.wechat_4_1_9_21",
     "微信 4.1.8.107": "versions.wechat_4_1_8_107",
+    "微信 4.1.15.8": "versions.wechat_4_1_15_8",
 }
 
 
@@ -14,4 +15,4 @@ def get_version_labels():
 
 def get_default_version():
     """返回默认（最新）版本标签"""
-    return next(iter(VERSIONS.keys()))
+    return list(VERSIONS.keys())[-1]

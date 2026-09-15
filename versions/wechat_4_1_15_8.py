@@ -1,0 +1,625 @@
+import time
+import random
+import uiautomation as auto
+
+auto.SetGlobalSearchTimeout(1.0)
+
+import subprocess
+import numpy as np
+import pandas as pd
+import pyperclip
+import os
+import pyautogui
+
+from ctypes import *
+from PIL import ImageGrab
+from clipboard import setClipboardFiles
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QMimeData, QUrl
+from typing import List
+
+from wechat_locale import WeChatLocale
+
+
+# 鼠标移动到控件上
+def move(element):
+    x, y = element.GetPosition()
+    auto.SetCursorPos(x, y)
+
+
+# 鼠标快速点击控件
+def click(element):
+    x, y = element.GetPosition()
+    auto.Click(x, y)
+
+
+# 鼠标右键点击控件
+def right_click(element):
+    x, y = element.GetPosition()
+    auto.RightClick(x, y)
+
+
+# 鼠标快速点击两下控件
+def double_click(element):
+    x, y = element.GetPosition()
+    auto.SetCursorPos(x, y)
+    element.DoubleClick()
+
+
+# 鼠标滚轮向下滑动
+def wheel_down():
+    auto.WheelDown()
+
+
+class WeChat:
+    def __init__(self, path, locale="zh-CN"):
+        # 微信打开路径
+        self.path = path
+
+        # 用于复制内容到剪切板
+        self.app = QApplication.instance() or QApplication([])
+
+        # 自动回复的联系人列表
+        self.auto_reply_contacts = []
+
+        # 自动回复的内容
+        self.auto_reply_msg = "[自动回复]您好，我现在正在忙，稍后会主动联系您，感谢理解。"
+
+        assert locale in WeChatLocale.getSupportedLocales()
+        self.lc = WeChatLocale(locale)
+
+        # 搜索联系人后等待对话框弹出的时间（秒），可由GUI动态修改
+        # 支持范围格式 [min, max]，实际等待时间为随机值
+        self.search_wait = [0.3, 0.3]
+
+        # 微信启动快捷键，可由GUI动态修改
+        self.hotkey = "{Ctrl}{Alt}w"
+
+    # 打开微信客户端
+    def open_wechat(self):
+        # 经验判断:微信的控件ClassName都以mmui开头
+
+        # 先检查当前焦点是否已经在微信窗口上，如果是则直接返回
+        now = auto.GetFocusedControl()
+        if now.ClassName.startswith("mmui"):
+            return
+
+        num_trials = 5
+        success = False
+
+        for _ in range(num_trials):
+            auto.SendKeys(self.hotkey)
+            now = auto.GetFocusedControl()
+            if now.ClassName.startswith("mmui"):
+                success = True
+                break
+
+        if not success:
+            raise RuntimeError("无法打开微信窗口，请检查微信是否已经打开，或者快捷键设置是否正确")
+
+    # 获取当前聊天对象的昵称
+    def get_current_name(self):
+        # 打开微信，获取根窗口并通过点击获取焦点
+        self.open_wechat()
+
+        # 等待焦点锁定在微信窗口
+        time.sleep(1)
+
+        # 获取聊天窗口
+        window = auto.TextControl(Depth=20)
+        return window.Name
+
+    # 打开微信并将焦点定位到搜索框（公共逻辑，防止深度值散落多处）
+    def _focus_search_box(self):
+        self.open_wechat()
+
+        # 搜索框在不同的界面上深度不同（例如聊天界面和通讯录界面），因此统一先切换到聊天界面
+        chat_interface = auto.ButtonControl(Depth=6, ClassName="mmui::XTabBarItem")
+        click(chat_interface)
+
+        search_box = auto.EditControl(Depth=15, Name=self.lc.search)
+        click(search_box)
+
+    # 防止微信长时间挂机导致掉线
+    def prevent_offline(self):
+        self._focus_search_box()
+
+    # 搜索指定用户
+    def get_contact(self, name) -> bool:
+        self._focus_search_box()
+
+        pyperclip.copy(name)
+        auto.SendKeys("{Ctrl}v")
+
+        # 等待客户端搜索联系人（支持范围随机等待）
+        if isinstance(self.search_wait, list):
+            time.sleep(random.uniform(self.search_wait[0], self.search_wait[1]))
+        else:
+            time.sleep(self.search_wait)  # backward compat
+
+        # 现在群聊不会出现在搜索的第一行，需要手动选择
+        list_control = auto.ListControl(Depth=5)
+        found = False
+        for item in list_control.GetChildren():
+            # 联系人项的 ClassName 不包含 "XTableCell"，默认选择第一个联系人，点击进入窗口
+            if "XTableCell" not in item.ClassName:
+                click(item)
+                found = True
+                break
+
+        if found:
+            # 点击发送内容输入框来获取输入焦点 (对于被折叠的群聊需要这一步)
+            tool_bar = auto.ToolBarControl(Depth=18)
+            move(tool_bar)
+            click(tool_bar)
+
+        return found
+
+    # 鼠标移动到发送按钮处点击发送消息
+    def press_enter(self):
+        # 获取发送按钮
+        send_button = auto.ButtonControl(Depth=21, Name=self.lc.send)
+        click(send_button)
+
+    def paste_text(self, text: str) -> None:
+        """
+        封装文本粘贴逻辑
+        Args:
+            text: 待发送文本
+        """
+        pyperclip.copy(text)
+        # 等待粘贴
+        time.sleep(0.3)
+        auto.SendKeys("{Ctrl}v")
+
+    def send_msg(self, name, at_names: List[str] = None, text: str = None, search_user: bool = True) -> bool:
+        """
+        搜索指定用户名的联系人发送信息, 同时可以在指定群聊中@他人（若@所有人需具备@所有人权限）
+        Args:
+            name:  群聊名称
+            at_names: 若发送对象为群，则可以@他人（若@所有人需具备@所有人权限）
+            text: 要@的人的消息
+            search_user: 是否需要搜索群聊
+        """
+        if search_user:
+            if not self.get_contact(name):
+                # 联系人未找到，跳过发送
+                return False
+
+        if at_names is not None:
+            # @所有列表中的人名
+            for at_name in at_names:
+                # 如果at_name为 "所有人" 则代表@所有人
+                if at_name == "所有人":
+                    auto.SendKeys("@{UP}{enter}")
+
+                elif at_name != "":
+                    auto.SendKeys(f"@{at_name}")
+                    # 按下回车键确认要at的人
+                    auto.SendKeys("{enter}")
+
+        # 如果发送信息不为空，则发送信息
+        if text is not None:
+            self.paste_text(text)
+
+        self.press_enter()
+        return True
+
+    # 搜索指定用户名的联系人发送文件
+    def send_file(self, name: str, path: str, search_user: bool = True) -> None:
+        """
+        Args:
+            name: 指定用户名的名称，输入搜索框后出现的第一个人
+            path: 发送文件的本地地址
+            search_user: 是否需要搜索用户
+        """
+        if search_user:
+            self.get_contact(name)
+
+        # 将文件复制到剪切板
+        setClipboardFiles([path])
+
+        auto.SendKeys("{Ctrl}v")
+        self.press_enter()
+
+    # 获取所有通讯录中所有联系人
+    def find_all_contacts(self) -> pd.DataFrame:
+        self.open_wechat()
+
+        # 获取通讯录管理界面
+        click(auto.ButtonControl(Name=self.lc.contacts))
+        contacts_menu = auto.ListItemControl(Depth=13, foundIndex=1)
+        click(contacts_menu)
+
+        # 将鼠标移动到联系人上以便可以通过鼠标滚轮往下滑动
+        move(auto.ListItemControl(Depth=8, foundIndex=1))
+
+        # 获取初始群聊列表
+        contacts = pd.DataFrame(columns=["昵称", "备注", "标签"])
+        contact_set = set()
+        for contact in auto.ListControl(Depth=7).GetChildren():
+            # 获取用户的昵称备注以及标签。注意这种方式没有办法准确获取昵称和备注，因为微信自身的信息组织问题。
+            name, note, label = contact.Name.rsplit(" ", maxsplit=2)
+            if name not in contact_set:
+                contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
+                contact_set.add(name)
+
+        # 模拟鼠标下滑一直读取群聊列表直到无法下滑为止
+        num_trial = 10
+        while num_trial > 0:
+            try:
+                ori_len = len(contact_set)
+
+                wheel_down()
+                for contact in auto.ListControl(Depth=7).GetChildren():
+                    # 获取用户的昵称备注以及标签。注意这种方式没有办法准确获取昵称和备注，因为微信自身的信息组织问题。
+                    name, note, label = contact.Name.rsplit(" ", maxsplit=2)
+                    if name not in contact_set:
+                        contacts = contacts._append({"昵称": name, "备注": note, "标签": label}, ignore_index=True)
+                        contact_set.add(name)
+
+                # 如果没有新增群聊则减少尝试次数，尝试3次后退出
+                if len(contact_set) == ori_len:
+                    num_trial -= 1
+                # 如果有新增群聊则重置尝试次数
+                else:
+                    num_trial = 10
+                    pass
+
+            except Exception as e:
+                print(e)
+                pass
+
+        return contacts
+
+    # 获取所有群聊
+    def find_all_groups(self) -> list:
+        self.open_wechat()
+
+        # 获取通讯录管理界面
+        click(auto.ButtonControl(Name=self.lc.contacts))
+        contacts_menu = auto.ListItemControl(Depth=13, foundIndex=1)
+        click(contacts_menu)
+
+        # 点击最近群聊
+        click(auto.ListItemControl(Depth=6, foundIndex=5))
+
+        # 获取初始群聊列表
+        groups = set()
+        for i, group in enumerate(auto.ListControl(Depth=5).GetChildren()):
+            # 前几个不是群聊，跳过
+            if i >= 5:
+                name = group.Name.rsplit("(", maxsplit=1)[0]
+                groups.add(name)
+
+        # 模拟鼠标下滑一直读取群聊列表直到无法下滑为止
+        num_trial = 10
+        while num_trial > 0:
+            try:
+                ori_len = len(groups)
+
+                wheel_down()
+                for i, group in enumerate(auto.ListControl(Depth=5).GetChildren()):
+                    if i >= 5:
+                        name = group.Name.split("(")[0]
+                        groups.add(name)
+
+                # 如果没有新增群聊则减少尝试次数，尝试3次后退出
+                if len(groups) == ori_len:
+                    num_trial -= 1
+                # 如果有新增群聊则重置尝试次数
+                else:
+                    num_trial = 10
+
+            except Exception as e:
+                print(e)
+
+        # 返回群聊列表
+        return list(groups)
+
+    # 检测微信是否收到新消息
+    def check_new_msg(self):
+        raise NotImplementedError("该方法尚未适配新版微信")
+
+        self.open_wechat()
+
+        # 获取左侧聊天按钮
+        chat_btn = auto.ButtonControl(Name=self.lc.chats)
+        double_click(chat_btn)
+
+        # 持续点击聊天按钮，直到获取完全部新消息
+        item = auto.ListItemControl(Depth=10)
+        prev_name = item.ButtonControl().Name
+
+        while True:
+            # 判断该联系人是否有新消息
+            pane_control = item.PaneControl()
+            if len(pane_control.GetChildren()) == 3:
+                print(f"{item.ButtonControl().Name} 有新消息")
+                # 判断该联系人是否需要自动回复
+                if item.ButtonControl().Name in self.auto_reply_contacts:
+                    print(f"自动回复 {item.ButtonControl().Name}")
+                    self._auto_reply(item, self.auto_reply_msg)
+
+            click(item)
+
+            # 跳转到下一个新消息
+            double_click(chat_btn)
+            item = auto.ListItemControl(Depth=10)
+
+            # 已经完成遍历，退出循环
+            if prev_name == item.ButtonControl().Name:
+                break
+
+            prev_name = item.ButtonControl().Name
+
+    # 设置自动回复的联系人
+    def set_auto_reply(self, contacts):
+        # contacts是一个列表
+        self.auto_reply_contacts = contacts
+
+    # 自动回复
+    def _auto_reply(self, element, text):
+        click(element)
+        pyperclip.copy(text)
+        auto.SendKeys("{Ctrl}v")
+        self.press_enter()
+
+    # 识别聊天内容的类型
+    # 0：用户发送    1：时间信息  2：红包信息  3：”查看更多消息“标志 4：撤回消息
+    def _detect_type(self, list_item_control: auto.ListItemControl) -> int:
+        value = None
+        # 判断内容框是否为时间框，如果是时间框则子控件不是PaneControl
+        if not isinstance(list_item_control.GetFirstChildControl(), auto.PaneControl):
+            value = 1
+
+        else:
+            cnt = 0
+            for child in list_item_control.PaneControl().GetChildren():
+                cnt += len(child.GetChildren())
+
+            # 判断是否为用户发送的信息
+            if cnt > 0:
+                value = 0
+            # 判断是否为“查看更多消息”
+            elif list_item_control.Name == "查看更多消息":
+                value = 3
+            # 或者是红包信息
+            elif "红包" in list_item_control.Name or "red packet" in list_item_control.Name.lower():
+                value = 2
+            # 或者是撤回消息
+            elif "撤回了一条消息" in list_item_control.Name:
+                value = 4
+            # 或者是新消息通知
+            elif "以下为新消息" in list_item_control.Name:
+                value = 6
+
+        if value is None:
+            raise ValueError("无法识别该控件类型")
+
+        return value
+
+    # 获取聊天窗口
+    def _get_chat_frame(self, name: str):
+        self.get_contact(name)
+        return auto.ListControl(Name=self.lc.message)
+
+    def save_dialog_pictures(self, name: str, num: int, save_dir: str) -> None:
+        """
+        保存指定聊天记录中的图片。图片的名字代表图片在聊天记录中的顺序，从1开始代表最新的图片。
+        Args:
+            name: 聊天窗口的名字
+            num: 保存的最大数量（从最新图片开始保存）
+            save_dir: 保存的目录
+        """
+        raise NotImplementedError("该方法尚未适配新版微信")
+        # 进入图片聊天记录界面
+        self.get_contact(name)
+        click(auto.ButtonControl(Name=self.lc.chat_history, Depth=14))
+        click(auto.TabItemControl(Name=self.lc.photos_n_videos, Depth=6))
+
+        # 图片栏控件
+        list_control = auto.ListControl(Name=self.lc.photos_n_videos, Depth=6)
+
+        # 如果图片数量 < num，则继续往上翻直到满足条件或无法上翻为止
+        move(list_control.GetLastChildControl())
+        pictures = set()
+        cnt = 0
+        while cnt < num:
+            ori_cnt = cnt
+            for list_item_control in list_control.GetChildren()[::-1]:
+                # 如果标签不是图片则跳过
+                if len(list_item_control.GetFirstChildControl().GetChildren()) == 3:
+                    continue
+
+                if cnt < num:
+                    # 复制图片到剪切板
+                    right_click(list_item_control)
+                    menu = auto.ListControl(Depth=4)
+                    copy = menu.GetFirstChildControl()
+                    # 如果图片已经被清理则跳过
+                    if copy.Name != self.lc.copy:
+                        continue
+                    else:
+                        click(auto.MenuItemControl(Name=self.lc.copy, Depth=5))
+
+                    # 获取图片路径防止重复存储
+                    pic_hash = ImageGrab.grabclipboard()[0]
+
+                    # 获取后缀
+                    suffix = pic_hash.split(".")[-1]
+
+                    # 保存图片
+                    if pic_hash not in pictures:
+                        cnt += 1
+                        pictures.add(pic_hash)
+                        save_path = os.path.join(save_dir, f"{cnt}.{suffix}")
+                        os.system(f"copy \"{pic_hash}\" \"{save_path}\"")
+            # 上滑
+            pyautogui.scroll(300)
+            # 如果无法上滑则退出
+            if ori_cnt == cnt:
+                break
+
+    # 获取指定聊天窗口的聊天记录
+    def get_dialogs(self, name: str, n_msg: int, search_user: bool = True) -> List:
+        """
+        Args:
+            name: 聊天窗口的姓名
+            n_msg: 获取聊天记录的最大数量（从最后一条往上算）
+            search_user: 是否需要搜索用户
+
+        Return:
+            dialogs: 聊天记录列表，内部元素为三元组（信息类型，发送人，发送内容）
+        """
+        raise NotImplementedError("该方法尚未适配新版微信")
+
+        if search_user:
+            list_control = self._get_chat_frame(name)
+        else:
+            list_control = auto.ListControl(Name=self.lc.message)
+        scroll_pattern = list_control.GetScrollPattern()
+
+        # 如果聊天记录数量 < n_msg，则继续往上翻直到满足条件或无法上翻为止
+        while len(list_control.GetChildren()) < n_msg:
+            # 如果滑轮存在，将聊天记录翻到“查看更多消息”
+            if scroll_pattern:
+                scroll_pattern.SetScrollPercent(-1, 0)
+            # 如果无法上翻则退出
+            first_item = list_control.GetFirstChildControl()
+            if self._detect_type(first_item) != 3:
+                break
+            # 否则点击“查看更多消息”
+            else:
+                click(first_item)
+
+        cnt = 0
+        dialogs = []
+        value_to_info = {0: '用户发送', 1: '时间信息', 2: '红包信息', 3: '"查看更多消息"标志', 4: '撤回消息',
+                         5: "System Notification", 6: '"以下是新消息"标志'}
+        # 从下往上依次记录聊天内容。
+        for list_item_control in list_control.GetChildren()[::-1]:
+            v = self._detect_type(list_item_control)
+            msg = list_item_control.Name
+            name = list_item_control.ButtonControl().Name if v == 0 else ''
+
+            cnt += 1
+            dialogs.append((value_to_info[v], name, msg))
+
+            # 如果达到n_msg则退出
+            if cnt == n_msg:
+                break
+
+        # 将聊天记录列表翻转
+        dialogs = dialogs[::-1]
+        return dialogs
+
+    def get_dialogs_by_time_blocks(self, name: str, n_time_blocks: int, search_user: bool = True) -> List[List]:
+        """
+        获取指定聊天窗口的聊天记录，并按时间信息分组。
+        Args:
+            name: 聊天窗口的姓名
+            n_time_blocks: 获取的时间分块数量
+            search_user: 是否需要搜索用户
+        Return:
+            groups: 聊天记录列表，每个元素为一个时间分块内的消息列表
+        """
+        raise NotImplementedError("该方法尚未适配新版微信")
+
+        n_msg = n_time_blocks * 5
+        prev_dialogs = None
+        groups = []
+        while True:
+            dialogs = self.get_dialogs(name, n_msg, search_user)
+
+            # 如果获取的dialogs和之前一样，说明没有更多消息了，退出循环
+            if prev_dialogs == dialogs:
+                break
+            # 分组逻辑调整：处理顺序改为从最新消息到最早消息
+            groups = []
+            current_group = None
+
+            # 遍历所有消息，按照时间信息分组
+            for msg in dialogs:
+                # 遇见时间信息则新建一个分组
+                if msg[0] == '时间信息':
+                    # 将上一个分组加入到groups中
+                    if current_group is not None:
+                        groups.append(current_group)
+
+                    # 初始化新的分组
+                    current_group = [msg]
+
+                elif current_group is not None:
+                    current_group.append(msg)
+
+            # 将最后一个分组加入到groups中
+            if current_group is not None:
+                groups.append(current_group)
+
+            # 获取n_time_blocks个时间块，取groups的最后n_time_blocks个元素
+            if len(groups) >= n_time_blocks:
+                groups = groups[-n_time_blocks:]
+                break
+            else:
+                prev_dialogs = dialogs
+                n_msg *= 2
+                search_user = False  # 后续不需要再次搜索用户
+
+        return groups
+
+
+if __name__ == '__main__':
+    # # 测试
+    path = "D:\Program Files (x86)\Tencent\Weixin\Weixin.exe"
+    # path = "D:\Program Files (x86)\Weixin\Weixin.exe"
+    wechat = WeChat(path, locale="zh-CN")
+    wechat.hotkey = "{Ctrl}{Alt}e"
+
+    # 打开微信窗口
+    # wechat.open_wechat()
+    # wechat.check_new_msg()
+    # res = wechat.find_all_contacts()
+    # print(res)
+
+    # groups = wechat.find_all_groups()
+    # print(groups)
+    # print(len(groups))
+
+    # name = "四片"
+    # at_name = ["fan", "wen", "所有人"]
+    # text = "去不去吃饭"
+    # wechat.send_msg(name, at_name, text)
+
+    # dialogs = wechat.get_dialogs("米婆", 5)
+
+    # 单元测试
+    # print(wechat.get_current_name())
+
+    # wechat.hotkey = "{Ctrl}{Alt}e"
+    # wechat.get_contact("斗地主")
+
+    # 发送文本信息
+    name = "ltenjoy"
+    # at_names = ["fan", "wen", "所有人"]
+    text = "去不去吃饭"
+    wechat.send_msg(name, [], text)
+
+    # 发送文本信息到群聊
+    # name = "斗地主"
+    # text = "测试"
+    # wechat.send_msg(name, [], text)
+
+    # 发送文件
+    # name = "ltenjoy"
+    # file_path = r"C:\Users\Dell\Pictures\takagi.jpeg"
+    # wechat.send_file(name, file_path)
+
+    # 获取群聊列表
+    # groups = wechat.find_all_groups()
+
+    # 获取好友列表
+    # contacts = wechat.find_all_contacts()
+
+    # wechat.open_wechat()
+    # wechat._focus_search_box()

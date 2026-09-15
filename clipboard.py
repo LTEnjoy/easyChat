@@ -35,5 +35,5 @@ def readClipboardFilePaths():
 pDropFiles = DROPFILES()
 pDropFiles.pFiles = sizeof(DROPFILES)
 pDropFiles.fWide = True
-matedata = bytes(pDropFiles)
+metadata = bytes(pDropFiles)
 
